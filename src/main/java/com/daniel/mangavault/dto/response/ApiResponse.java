@@ -10,5 +10,5 @@ import lombok.*;
 public class ApiResponse<T> {
     private int code;
     private T result;
-
+    private String message;
 }

@@ -1060,12 +1060,211 @@ Sau task này, cần hiểu được:
 - `ApiResponse<MangaResponse>` giúp response giữ format thống nhất.
 - Đây là flow đầu tiên đi đủ từ client đến database.
 
-## Task Tiếp Theo
+## Task 3.7: Tạo API GET /api/mangas Để Lấy Danh Sách Manga
 
-Task 3.7 sẽ là:
+### Mục Tiêu
 
-```text
-Tạo API GET /api/mangas để lấy danh sách manga
+Sau khi tạo được manga bằng:
+
+```http
+POST /api/mangas
 ```
 
-Mục tiêu là học luồng đọc dữ liệu từ database và trả danh sách response cho client.
+bước tiếp theo là đọc dữ liệu đã lưu trong database.
+
+API cần có:
+
+```http
+GET /api/mangas
+```
+
+Response trả về danh sách manga theo format chung:
+
+```java
+ApiResponse<List<MangaResponse>>
+```
+
+### Luồng Chạy
+
+```text
+Client
+-> MangaController
+-> MangaService
+-> MangaRepository.findAll()
+-> Database
+-> List<Manga>
+-> List<MangaResponse>
+-> ApiResponse<List<MangaResponse>>
+```
+
+### Bài Học Cần Nhớ Sau Task 3.7
+
+Sau task này, cần hiểu được:
+
+- `GET` dùng để đọc dữ liệu.
+- `JpaRepository.findAll()` giúp lấy toàn bộ record trong bảng.
+- Entity không nên trả thẳng ra API.
+- Service chịu trách nhiệm map `Manga` entity sang `MangaResponse`.
+- `ApiResponse<List<MangaResponse>>` giúp response danh sách vẫn giữ format thống nhất.
+
+## Task 3.8: Tạo API GET /api/mangas/{id} Để Lấy Chi Tiết Manga
+
+### Mục Tiêu
+
+Sau khi lấy được danh sách manga, ta cần lấy chi tiết một manga cụ thể theo `id`.
+
+API cần có:
+
+```http
+GET /api/mangas/{id}
+```
+
+Ví dụ:
+
+```http
+GET /api/mangas/550e8400-e29b-41d4-a716-446655440000
+```
+
+### Luồng Chạy
+
+```text
+Client
+-> MangaController nhận id bằng @PathVariable
+-> MangaService.getMangaById(id)
+-> MangaRepository.findById(id)
+-> Database
+-> MangaResponse
+-> ApiResponse<MangaResponse>
+```
+
+### `@PathVariable`
+
+Annotation:
+
+```java
+@PathVariable
+```
+
+dùng để lấy giá trị động từ URL.
+
+Ví dụ URL:
+
+```http
+GET /api/mangas/abc123
+```
+
+thì `id` trong controller sẽ có giá trị:
+
+```text
+abc123
+```
+
+### Bài Học Cần Nhớ Sau Task 3.8
+
+Sau task này, cần hiểu được:
+
+- URL có thể chứa tham số động như `{id}`.
+- `@PathVariable` giúp lấy tham số đó vào method controller.
+- `findById(id)` trả về `Optional<Manga>` vì dữ liệu có thể không tồn tại.
+- Khi dữ liệu không tồn tại, backend cần xử lý lỗi rõ ràng.
+
+## Task 3.9: Xử Lý Lỗi Không Tìm Thấy Manga
+
+### Mục Tiêu
+
+Ở task lấy manga theo `id`, có trường hợp client truyền một `id` không tồn tại.
+
+Nếu chỉ throw lỗi thông thường, API có thể trả về HTTP 500. Điều này không đúng nghĩa, vì server không bị hỏng. Chỉ là resource không tồn tại.
+
+Trường hợp này nên trả:
+
+```http
+404 Not Found
+```
+
+Response mong đợi:
+
+```json
+{
+  "code": 4040,
+  "message": "Manga not found",
+  "result": null
+}
+```
+
+### Thành Phần Được Thêm
+
+#### `AppException`
+
+`AppException` là exception riêng của project.
+
+Service có thể dùng exception này để báo lỗi nghiệp vụ:
+
+```java
+throw new AppException("Manga not found");
+```
+
+#### `GlobalExceptionHandler`
+
+`GlobalExceptionHandler` dùng:
+
+```java
+@RestControllerAdvice
+```
+
+để bắt exception trong toàn bộ REST API và chuyển thành response JSON thống nhất.
+
+Method xử lý lỗi dùng:
+
+```java
+@ExceptionHandler(AppException.class)
+@ResponseStatus(HttpStatus.NOT_FOUND)
+```
+
+Ý nghĩa:
+
+- Khi có `AppException`, handler này sẽ được gọi.
+- HTTP status trả về là `404 Not Found`.
+- Body vẫn dùng `ApiResponse`.
+
+### Bài Học Cần Nhớ Sau Task 3.9
+
+Sau task này, cần hiểu được:
+
+- Không phải lỗi nào cũng là HTTP 500.
+- Resource không tồn tại nên trả HTTP 404.
+- `@RestControllerAdvice` dùng để xử lý lỗi tập trung.
+- `@ExceptionHandler` chỉ định method nào xử lý loại exception nào.
+- Response lỗi cũng nên có format thống nhất để frontend dễ xử lý.
+
+## Trạng Thái Hiện Tại
+
+Project hiện có các API:
+
+```http
+GET /api/health
+POST /api/mangas
+GET /api/mangas
+GET /api/mangas/{id}
+```
+
+Các phần đã có:
+
+- Spring Boot project skeleton.
+- Response wrapper chung `ApiResponse<T>`.
+- Database layer với Spring Data JPA và MySQL.
+- Entity `Manga`.
+- Enum `MangaStatus` và `Visibility`.
+- DTO request/response cho manga.
+- Service tạo manga, lấy danh sách manga, lấy manga theo id.
+- Global exception handling cho lỗi không tìm thấy manga.
+
+## Task Tiếp Theo
+
+Task tiếp theo nên là:
+
+```text
+Task 3.10: Tách method map Manga entity sang MangaResponse
+```
+
+Mục tiêu là giảm lặp code trong `MangaService`, vì hiện tại logic build `MangaResponse` đang xuất hiện ở nhiều method.

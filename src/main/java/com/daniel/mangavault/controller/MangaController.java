@@ -30,5 +30,12 @@ public class MangaController {
                 .build();
     }
 
+    @GetMapping("/{id}")
+    public ApiResponse<MangaResponse> getMangaById(@PathVariable String id){
+        return ApiResponse.<MangaResponse>builder()
+                .code(1000)
+                .result(mangaService.getMangaById(id))
+                .build();
+    }
 
 }

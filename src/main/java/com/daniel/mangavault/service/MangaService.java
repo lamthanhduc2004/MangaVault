@@ -3,6 +3,7 @@ package com.daniel.mangavault.service;
 import com.daniel.mangavault.dto.request.MangaCreationRequest;
 import com.daniel.mangavault.dto.response.MangaResponse;
 import com.daniel.mangavault.entity.Manga;
+import com.daniel.mangavault.exception.AppException;
 import com.daniel.mangavault.repository.MangaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -53,5 +54,23 @@ public class MangaService {
                         .updatedAt(manga.getUpdatedAt())
                         .build())
                 .toList();
+    }
+
+    public MangaResponse getMangaById(String id){
+        Manga manga = mangaRepository.findById(id)
+                .orElseThrow(() -> new AppException("Manga not found"));
+
+        return MangaResponse.builder()
+                .id(manga.getId())
+                .title(manga.getTitle())
+                .slug(manga.getSlug())
+                .description(manga.getDescription())
+                .coverUrl(manga.getCoverUrl())
+                .status(manga.getStatus())
+                .visibility(manga.getVisibility())
+                .createdAt(manga.getCreatedAt())
+                .updatedAt(manga.getUpdatedAt())
+                .build();
+
     }
 }
