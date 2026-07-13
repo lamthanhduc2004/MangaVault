@@ -1,6 +1,9 @@
 HELP.md
 target/
 .m2/
+.env
+.env.*
+!.env.example
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -32,3 +35,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Frontend ###
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

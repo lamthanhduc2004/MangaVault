@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "MangaVault",
+    "description": "Initial requests for the MangaVault REST API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api"
+    },
+    {
+      "key": "mangaId",
+      "value": "replace-with-manga-id"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "List mangas",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/mangas"
+      }
+    },
+    {
+      "name": "Get manga by ID",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/mangas/{{mangaId}}"
+      }
+    },
+    {
+      "name": "Create manga",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Solo Leveling\",\n  \"slug\": \"solo-leveling\",\n  \"description\": \"A hunter grows stronger through a mysterious system.\",\n  \"coverUrl\": \"https://example.com/covers/solo-leveling.jpg\",\n  \"status\": \"ONGOING\",\n  \"visibility\": \"PUBLIC\"\n}"
+        },
+        "url": "{{baseUrl}}/mangas"
+      }
+    }
+  ]
+}

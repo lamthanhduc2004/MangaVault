@@ -1257,14 +1257,27 @@ Các phần đã có:
 - Enum `MangaStatus` và `Visibility`.
 - DTO request/response cho manga.
 - Service tạo manga, lấy danh sách manga, lấy manga theo id.
+- Logic chuyển `Manga` entity sang `MangaResponse` được tập trung trong một method.
 - Global exception handling cho lỗi không tìm thấy manga.
+
+## Task 3.10: Tách Method Map Manga Entity Sang MangaResponse
+
+Task này loại bỏ phần code tạo `MangaResponse` bị lặp trong các method của `MangaService`.
+
+Method `mapToMangaResponse(Manga manga)` hiện được sử dụng cho:
+
+- Manga vừa được tạo.
+- Danh sách manga.
+- Chi tiết manga theo id.
+
+Việc tập trung mapping giúp thay đổi response ở một nơi duy nhất và chuẩn bị cho package `mapper` khi domain mở rộng.
 
 ## Task Tiếp Theo
 
 Task tiếp theo nên là:
 
 ```text
-Task 3.10: Tách method map Manga entity sang MangaResponse
+Task 3.11: Thêm pagination cho API danh sách manga
 ```
 
-Mục tiêu là giảm lặp code trong `MangaService`, vì hiện tại logic build `MangaResponse` đang xuất hiện ở nhiều method.
+Mục tiêu là tránh tải toàn bộ dữ liệu khi số lượng manga tăng và tuân theo API convention của dự án.
