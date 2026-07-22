@@ -1,6 +1,6 @@
 package com.daniel.mangavault.dto.response;
 
-import com.daniel.mangavault.enums.MangaStatus;
+import com.daniel.mangavault.enums.StoryStatus;
 import com.daniel.mangavault.enums.Visibility;
 import lombok.*;
 
@@ -11,13 +11,14 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MangaResponse {
+public class StoryResponse {
     private String id;
     private String title;
     private String slug;
+    private String author;
     private String description;
     private String coverUrl;
-    private MangaStatus status;
+    private StoryStatus status;
     private Visibility visibility;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
