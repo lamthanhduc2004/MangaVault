@@ -3,20 +3,22 @@ import { Link } from 'react-router-dom';
 import { getStories } from '../../services/storyService';
 import { deleteStory } from '../../services/adminService';
 import Pagination from '../../components/Pagination';
+import SearchBar from '../../components/SearchBar';
 import StatusBadge from '../../components/StatusBadge';
 
 export default function AdminStoryListPage() {
   const [data, setData] = useState(null);
   const [page, setPage] = useState(0);
+  const [keyword, setKeyword] = useState('');
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      setData(await getStories({ page, size: 10 }));
+      setData(await getStories({ keyword, page, size: 10 }));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
-  }, [page]);
+  }, [keyword, page]);
 
   useEffect(() => {
     load();
@@ -36,7 +38,10 @@ export default function AdminStoryListPage() {
     <div>
       <div className="list-header">
         <h1>Quản trị truyện</h1>
-        <Link to="/admin/stories/new" className="btn-primary">+ Thêm truyện</Link>
+        <div className="list-tools">
+          <SearchBar initial={keyword} onSearch={(kw) => { setKeyword(kw); setPage(0); }} />
+          <Link to="/admin/stories/new" className="btn-primary">+ Thêm truyện</Link>
+        </div>
       </div>
       {error && <p className="error">Lỗi: {error}</p>}
       {data && (
@@ -69,7 +74,11 @@ export default function AdminStoryListPage() {
               ))}
             </tbody>
           </table>
-          {data.items.length === 0 && <p className="muted">Chưa có truyện nào.</p>}
+          {data.items.length === 0 && (
+            <p className="muted" style={{ marginTop: '1rem' }}>
+              {keyword ? `Không tìm thấy truyện nào cho "${keyword}".` : 'Chưa có truyện nào.'}
+            </p>
+          )}
           <Pagination page={data.page} totalPages={data.totalPages} onChange={setPage} />
         </>
       )}

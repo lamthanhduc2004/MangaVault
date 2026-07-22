@@ -75,7 +75,7 @@ Frontend: `cd frontend; npm run dev` (hoặc preview qua `.claude/launch.json`, 
 
 1. ~~`slug` chưa unique~~ — ĐÃ XONG (Giai đoạn 2).
 2. ~~`AppException` luôn map 404~~ — ĐÃ XONG: `ErrorCode` enum (Giai đoạn 2).
-3. Admin endpoints + trang `/admin` CHƯA có bảo vệ — chờ Giai đoạn 3 (auth).
+3. ~~Admin endpoints chưa bảo vệ~~ — ĐÃ XONG: Spring Security + JWT (Giai đoạn 3).
 4. OSIV (open-in-view) đang bật — lazy `chapter.getStory()` trong `ChapterService` dựa vào nó.
 5. Bảng `mangas` cũ còn trong DB local (vô hại, drop khi tiện).
 6. README + Postman collection chưa cập nhật theo domain Story/Chapter (để Giai đoạn 4).
@@ -87,9 +87,12 @@ User đã quyết qua AskUserQuestion: **Admin CRUD làm TRƯỚC, Auth làm SAU
 ### Giai đoạn 2 — Admin CRUD — ✅ HOÀN THÀNH (2026-07-22)
 - Backend + frontend admin CRUD đầy đủ, slug unique, ErrorCode enum. Đã verify API bằng curl (409/404 đúng mã) và UI trên browser (thêm/sửa chương hoạt động).
 
-### Giai đoạn 3 — Auth (tiếp theo)
-- User/Role entity, đăng ký (BCrypt, unique username/email), đăng nhập JWT, Spring Security (public read; ADMIN cho `/api/admin/**`), frontend AuthContext + protected routes.
-- 3 nhóm người dùng theo yêu cầu: GUEST / USER / ADMIN.
+### Giai đoạn 3 — Auth — ✅ HOÀN THÀNH (2026-07-22)
+- Entity `User` + enum `Role` (USER/ADMIN); `POST /api/auth/register|login`; JWT HS256 qua OAuth2 Resource Server (KHÔNG dùng jjwt — lưu ý: encoder cần `JwsHeader.with(MacAlgorithm.HS256)` tường minh).
+- `security/SecurityConfig`: GET public, `/api/admin/**` = ROLE_ADMIN; 401 (4010) / 403 (4030) trả envelope qua entry point; CORS chuyển từ WebConfig (đã xóa) vào đây.
+- Seed admin lúc start: `app.admin.*` (mặc định admin/admin123). ErrorCode mới: 4092/4093 trùng username/email, 4011 sai credentials.
+- Frontend: `context/AuthContext.jsx`, interceptor token trong `services/api.js`, LoginPage/RegisterPage, `routes/RequireAdmin.jsx` bọc `/admin`, nav theo trạng thái đăng nhập.
+- Đã verify: ma trận quyền qua curl (no token 401, USER 403, ADMIN 200, token rác 401) + UI flow trên browser.
 
 ### Giai đoạn 4 — Hoàn thiện demo bảo vệ
 - Trang chủ (truyện mới cập nhật), lọc theo trạng thái, tùy chọn đọc (cỡ chữ / nền tối — F22), cập nhật README + Postman collection.

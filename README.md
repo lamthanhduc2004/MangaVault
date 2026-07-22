@@ -24,8 +24,9 @@ React (Vite) — frontend/          Spring Boot 3.5 / Java 21 — repo root
 
 | Nhóm | Tính năng |
 |---|---|
-| Người đọc | Danh sách truyện (phân trang), tìm kiếm theo tên, chi tiết truyện, mục lục chương, đọc chương với điều hướng chương trước/sau |
-| Quản trị (`/admin`) | CRUD truyện, CRUD chương (form thêm/sửa inline, tự gợi ý số chương kế tiếp) — *chưa có đăng nhập, sẽ bảo vệ ở giai đoạn auth* |
+| Khách (GUEST) | Danh sách truyện (phân trang), tìm kiếm theo tên, chi tiết truyện, mục lục chương, đọc chương với điều hướng chương trước/sau |
+| Thành viên (USER) | Đăng ký, đăng nhập JWT |
+| Quản trị (ADMIN, `/admin`) | CRUD truyện, CRUD chương (form thêm/sửa inline, tự gợi ý số chương kế tiếp) — bảo vệ bằng Spring Security + JWT, tài khoản admin khởi tạo tự động lúc start |
 
 ## API
 
@@ -38,8 +39,10 @@ GET    /api/stories?keyword=&page=&size=      danh sách + tìm kiếm (sort m�
 GET    /api/stories/{id}                      chi tiết truyện
 GET    /api/stories/{id}/chapters             mục lục chương (không có nội dung)
 GET    /api/chapters/{id}                     nội dung chương + prev/next id
+POST   /api/auth/register                     đăng ký (luôn tạo role USER)
+POST   /api/auth/login                        đăng nhập, trả JWT
 
-# Admin (sẽ yêu cầu role ADMIN ở giai đoạn auth)
+# Admin (yêu cầu Authorization: Bearer <token> với role ADMIN)
 POST   /api/admin/stories
 PUT    /api/admin/stories/{id}
 DELETE /api/admin/stories/{id}                xóa kèm toàn bộ chương
@@ -48,7 +51,7 @@ PUT    /api/admin/chapters/{id}
 DELETE /api/admin/chapters/{id}
 ```
 
-Mã lỗi: `4041` truyện không tồn tại, `4042` chương không tồn tại (HTTP 404) · `4090` trùng slug, `4091` trùng số chương (HTTP 409) · `4000` dữ liệu không hợp lệ (HTTP 400).
+Mã lỗi: `4041`/`4042` không tồn tại (404) · `4090` slug, `4091` số chương, `4092` username, `4093` email bị trùng (409) · `4011` sai tài khoản/mật khẩu, `4010` thiếu/sai token (401) · `4030` không đủ quyền (403) · `4000` dữ liệu không hợp lệ (400).
 
 ## Chạy Project
 
@@ -70,6 +73,8 @@ npm run dev
 
 Kiểm tra backend sống: `GET http://localhost:8080/api/health`. Trên Linux/macOS thay `.\mvnw.cmd` bằng `./mvnw`.
 
+Tài khoản quản trị mặc định (tự tạo lần chạy đầu, đổi qua env `ADMIN_USERNAME`/`ADMIN_PASSWORD`): `admin` / `admin123`.
+
 ```powershell
 # Test
 .\mvnw.cmd test
@@ -81,5 +86,5 @@ Kiểm tra backend sống: `GET http://localhost:8080/api/health`. Trên Linux/m
 |---|---|---|
 | 1 | Domain Story/Chapter, API đọc công khai, frontend reader | ✅ Hoàn thành |
 | 2 | Admin CRUD truyện + chương, `ErrorCode` enum, slug unique | ✅ Hoàn thành |
-| 3 | Đăng ký/đăng nhập JWT, Spring Security, phân quyền GUEST/USER/ADMIN | ⏳ Tiếp theo |
-| 4 | Trang chủ, lọc trạng thái, tùy chọn đọc, hoàn thiện tài liệu | ⏳ Kế hoạch |
+| 3 | Đăng ký/đăng nhập JWT, Spring Security, phân quyền GUEST/USER/ADMIN | ✅ Hoàn thành |
+| 4 | Trang chủ, lọc trạng thái, tùy chọn đọc, hoàn thiện tài liệu | ⏳ Tiếp theo |

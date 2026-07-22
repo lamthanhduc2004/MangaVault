@@ -1316,7 +1316,25 @@ Sau Task 3.10, project nhận tài liệu yêu cầu chính thức (`docs/HƯỚ
 - **Update khác Create ở check trùng**: khi sửa, phải loại trừ chính bản ghi đang sửa (`existsBySlugAndIdNot`) — nếu không, lưu mà không đổi slug cũng bị báo trùng.
 - **State cũ trong React closure**: sau khi thêm chương, gợi ý "số chương kế tiếp" tính từ state trước khi reload → sai. Fix bằng cách cho hàm load trả về dữ liệu mới và tính gợi ý từ đó, thay vì đọc state.
 
+## Giai Đoạn 3: Đăng Ký / Đăng Nhập JWT + Phân Quyền
+
+### Những gì đã làm
+
+- Entity `User` (username/email unique, password BCrypt) + enum `Role` (USER, ADMIN — GUEST là trạng thái chưa đăng nhập, không lưu DB).
+- `POST /api/auth/register` (luôn tạo USER) và `POST /api/auth/login` (trả JWT chứa claim `role`).
+- `SecurityConfig`: stateless, HS256 qua OAuth2 Resource Server của Spring (không cần thư viện JWT ngoài); GET truyện/chương public, `/api/admin/**` cần `ROLE_ADMIN`; 401/403 trả đúng envelope `ApiResponse` qua entry point / access denied handler.
+- Seed tài khoản ADMIN lúc khởi động khi DB chưa có admin (cấu hình qua env, mặc định `admin`/`admin123` cho dev).
+- Frontend: `AuthContext` (token trong localStorage), axios interceptor gắn `Authorization: Bearer`, trang đăng nhập/đăng ký, `RequireAdmin` bọc route `/admin`, nav đổi theo trạng thái đăng nhập.
+
+### Bài học chính
+
+- **JWT bằng chính Spring Security**: `spring-boot-starter-oauth2-resource-server` có sẵn cả `JwtEncoder`/`JwtDecoder` (Nimbus) — không cần thêm jjwt. Đổi lại phải hiểu cấu hình: khi ký bằng secret đối xứng, **bắt buộc** truyền `JwsHeader.with(MacAlgorithm.HS256)` cho encoder, nếu không sẽ gặp "Failed to select a JWK signing key" (lỗi thực tế đã gặp).
+- **Claim → authority**: `JwtGrantedAuthoritiesConverter` đọc claim `role` và gắn prefix `ROLE_` để `hasRole("ADMIN")` hoạt động — phân quyền chỉ là chuỗi khớp nhau giữa lúc phát token và lúc kiểm tra.
+- **401/403 không đi qua `@RestControllerAdvice`**: exception của filter chain xảy ra trước khi tới controller, nên phải viết envelope JSON trong `AuthenticationEntryPoint`/`AccessDeniedHandler` — nếu không frontend nhận error trắng của Tomcat.
+- **CORS phải chuyển vào SecurityConfig**: `WebMvcConfigurer` CORS chạy sau security filter → preflight bị chặn; `CorsConfigurationSource` bean + `http.cors()` xử lý đúng tầng.
+- **Login không tiết lộ thông tin**: sai username hay sai password đều trả cùng một lỗi `INVALID_CREDENTIALS` — tránh cho kẻ dò biết username nào tồn tại.
+- **Frontend guard chỉ là UX**: `RequireAdmin` che trang, nhưng thứ thật sự chặn là Spring Security — đã test đủ ma trận: không token 401, USER token 403, ADMIN token 200, token rác 401.
+
 ## Giai Đoạn Tiếp Theo
 
-- **Giai đoạn 3 — Auth**: User/Role, đăng ký (BCrypt), đăng nhập JWT, Spring Security bảo vệ `/api/admin/**`, AuthContext + protected routes phía React.
 - **Giai đoạn 4 — Hoàn thiện demo**: trang chủ truyện mới cập nhật, lọc trạng thái, tùy chọn đọc (cỡ chữ, nền tối), cập nhật Postman collection.
