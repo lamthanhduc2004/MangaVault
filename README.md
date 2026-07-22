@@ -1,10 +1,6 @@
 # MangaVault — Website Đọc Truyện Trực Tuyến
 
-Đồ án thực tập tốt nghiệp: **website đọc truyện trực tuyến sử dụng React và Java Spring Boot**.
-
-- Tài liệu yêu cầu chính thức: [`docs/HƯỚNG ĐI THỰC TẬP.md`](docs/HƯỚNG%20ĐI%20THỰC%20TẬP.md)
-- Nhật ký học tập theo từng task/giai đoạn: [`docs/LEARNING_LOG.md`](docs/LEARNING_LOG.md)
-- Hướng dẫn cho AI coding assistant: [`CLAUDE.md`](CLAUDE.md)
+Đồ án thực tập: **website đọc truyện trực tuyến sử dụng React và Java Spring Boot**.
 
 ## Kiến Trúc
 
