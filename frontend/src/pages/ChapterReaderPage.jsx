@@ -21,12 +21,12 @@ export default function ChapterReaderPage() {
   const navigate = useNavigate();
   const [chapter, setChapter] = useState(null);
   const [error, setError] = useState(null);
+  // Font size is reader-specific; the light/dark theme is global (ThemeContext).
   const [fontSize, setFontSize] = useState(() => readPrefs().fontSize ?? 'medium');
-  const [dark, setDark] = useState(() => readPrefs().dark ?? false);
 
   useEffect(() => {
-    localStorage.setItem('mv_reader_prefs', JSON.stringify({ fontSize, dark }));
-  }, [fontSize, dark]);
+    localStorage.setItem('mv_reader_prefs', JSON.stringify({ fontSize }));
+  }, [fontSize]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -86,16 +86,10 @@ export default function ChapterReaderPage() {
             {f.label}
           </button>
         ))}
-        <button className={`font-btn${dark ? ' active' : ''}`} onClick={() => setDark(!dark)}>
-          {dark ? '☀️ Nền sáng' : '🌙 Nền tối'}
-        </button>
       </div>
 
       {nav}
-      <article
-        className={`reader-content${dark ? ' reader-dark' : ''}`}
-        style={{ fontSize: fontPx }}
-      >
+      <article className="reader-content" style={{ fontSize: fontPx }}>
         {chapter.content
           ? chapter.content.split('\n').map((p, i) => p.trim() && <p key={i}>{p}</p>)
           : <p className="muted">Chương này chưa có nội dung.</p>}
