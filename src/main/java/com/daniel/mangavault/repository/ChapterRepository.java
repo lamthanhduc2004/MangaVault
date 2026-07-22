@@ -12,4 +12,10 @@ public interface ChapterRepository extends JpaRepository<Chapter, String> {
     Optional<Chapter> findFirstByStoryIdAndChapterNumberLessThanOrderByChapterNumberDesc(String storyId, Integer chapterNumber);
 
     Optional<Chapter> findFirstByStoryIdAndChapterNumberGreaterThanOrderByChapterNumberAsc(String storyId, Integer chapterNumber);
+
+    boolean existsByStoryIdAndChapterNumber(String storyId, Integer chapterNumber);
+
+    boolean existsByStoryIdAndChapterNumberAndIdNot(String storyId, Integer chapterNumber, String id);
+
+    void deleteByStoryId(String storyId);
 }

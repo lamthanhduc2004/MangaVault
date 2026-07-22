@@ -13,11 +13,6 @@ export async function getStoryById(id) {
   return res.data.result;
 }
 
-export async function createStory(payload) {
-  const res = await api.post('/stories', payload);
-  return res.data.result;
-}
-
 export async function getChaptersOfStory(storyId) {
   const res = await api.get(`/stories/${storyId}/chapters`);
   return res.data.result; // ChapterSummary[] — no content

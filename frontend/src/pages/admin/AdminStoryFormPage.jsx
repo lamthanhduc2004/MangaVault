@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { createStory } from '../services/storyService';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getStoryById } from '../../services/storyService';
+import { createStory, updateStory } from '../../services/adminService';
 
 const INITIAL = {
   title: '',
@@ -12,11 +13,31 @@ const INITIAL = {
   visibility: 'PRIVATE',
 };
 
-export default function StoryCreatePage() {
+export default function AdminStoryFormPage() {
+  const { id } = useParams(); // undefined = create mode
   const [form, setForm] = useState(INITIAL);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(Boolean(id));
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!id) return;
+    getStoryById(id)
+      .then((story) =>
+        setForm({
+          title: story.title ?? '',
+          slug: story.slug ?? '',
+          author: story.author ?? '',
+          description: story.description ?? '',
+          coverUrl: story.coverUrl ?? '',
+          status: story.status ?? 'ONGOING',
+          visibility: story.visibility ?? 'PRIVATE',
+        }),
+      )
+      .catch((err) => setError(err.response?.data?.message || err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -24,23 +45,31 @@ export default function StoryCreatePage() {
     e.preventDefault();
     setSaving(true);
     setError(null);
+    const payload = {
+      ...form,
+      author: form.author || null,
+      description: form.description || null,
+      coverUrl: form.coverUrl || null,
+    };
     try {
-      const created = await createStory({
-        ...form,
-        author: form.author || null,
-        description: form.description || null,
-        coverUrl: form.coverUrl || null,
-      });
-      navigate(`/stories/${created.id}`);
+      if (id) {
+        await updateStory(id, payload);
+        navigate('/admin');
+      } else {
+        const created = await createStory(payload);
+        navigate(`/admin/stories/${created.id}/chapters`);
+      }
     } catch (err) {
       setError(err.response?.data?.message || err.message);
       setSaving(false);
     }
   };
 
+  if (loading) return <p className="muted">Đang tải...</p>;
+
   return (
     <div className="form-page">
-      <h1>Thêm truyện</h1>
+      <h1>{id ? 'Sửa truyện' : 'Thêm truyện'}</h1>
       {error && <p className="error">Lỗi: {error}</p>}
       <form onSubmit={handleSubmit} className="form">
         <label>
@@ -81,7 +110,7 @@ export default function StoryCreatePage() {
           </label>
         </div>
         <button type="submit" className="btn-primary" disabled={saving}>
-          {saving ? 'Đang lưu...' : 'Lưu truyện'}
+          {saving ? 'Đang lưu...' : id ? 'Cập nhật' : 'Lưu truyện'}
         </button>
       </form>
     </div>

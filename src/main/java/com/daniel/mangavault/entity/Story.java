@@ -2,6 +2,7 @@ package com.daniel.mangavault.entity;
 
 import com.daniel.mangavault.enums.StoryStatus;
 import com.daniel.mangavault.enums.Visibility;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -32,8 +33,10 @@ public class Story {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false, unique = true)
     private String slug;
 
     private String author;

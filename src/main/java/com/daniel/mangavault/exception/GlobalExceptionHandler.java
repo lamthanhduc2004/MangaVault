@@ -2,6 +2,7 @@ package com.daniel.mangavault.exception;
 
 import com.daniel.mangavault.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,12 +16,13 @@ import java.util.stream.Collectors;
 
 public class GlobalExceptionHandler {
     @ExceptionHandler(AppException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ApiResponse<Void> handleAppException(AppException exception){
-        return ApiResponse.<Void>builder()
-                .code(4040)
-                .message(exception.getMessage())
-                .build();
+    public ResponseEntity<ApiResponse<Void>> handleAppException(AppException exception){
+        ErrorCode errorCode = exception.getErrorCode();
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ApiResponse.<Void>builder()
+                        .code(errorCode.getCode())
+                        .message(errorCode.getMessage())
+                        .build());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

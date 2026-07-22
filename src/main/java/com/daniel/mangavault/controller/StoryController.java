@@ -1,13 +1,11 @@
 package com.daniel.mangavault.controller;
 
-import com.daniel.mangavault.dto.request.StoryCreationRequest;
 import com.daniel.mangavault.dto.response.ApiResponse;
 import com.daniel.mangavault.dto.response.ChapterSummaryResponse;
 import com.daniel.mangavault.dto.response.PageResponse;
 import com.daniel.mangavault.dto.response.StoryResponse;
 import com.daniel.mangavault.service.ChapterService;
 import com.daniel.mangavault.service.StoryService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,14 +17,6 @@ import java.util.List;
 public class StoryController {
     private final StoryService storyService;
     private final ChapterService chapterService;
-
-    @PostMapping
-    public ApiResponse<StoryResponse> createStory(@Valid @RequestBody StoryCreationRequest request){
-        return ApiResponse.<StoryResponse>builder()
-                .code(1000)
-                .result(storyService.createStory(request))
-                .build();
-    }
 
     @GetMapping
     public ApiResponse<PageResponse<StoryResponse>> getStories(

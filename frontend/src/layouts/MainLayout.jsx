@@ -7,7 +7,7 @@ export default function MainLayout() {
         <Link to="/" className="brand">📚 MangaVault</Link>
         <nav>
           <Link to="/" className="nav-link">Danh sách truyện</Link>
-          <Link to="/stories/new" className="nav-link btn-primary">+ Thêm truyện</Link>
+          <Link to="/admin" className="nav-link">Quản trị</Link>
         </nav>
       </header>
       <main className="content">

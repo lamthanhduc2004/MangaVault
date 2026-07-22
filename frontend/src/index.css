@@ -148,6 +148,26 @@ body {
   display: flex; flex-direction: column; gap: 1rem;
 }
 
+.table {
+  width: 100%; border-collapse: collapse; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+.table th, .table td { padding: 0.65rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+.table th { background: #eef0f6; font-size: 0.85rem; text-transform: uppercase; color: var(--muted); }
+.table tr:last-child td { border-bottom: none; }
+.table a { color: var(--text); font-weight: 500; }
+.table a:hover { color: var(--primary); }
+.table-actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
+
+.btn-small {
+  padding: 0.3rem 0.75rem; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); color: var(--text); cursor: pointer;
+  font-size: 0.85rem; font-weight: 500; text-decoration: none; font-family: inherit;
+}
+.btn-small:hover { border-color: var(--primary); color: var(--primary); }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { border-color: var(--danger); color: var(--danger); background: #fee2e2; }
+
 .muted { color: var(--muted); }
 .small { font-size: 0.82rem; }
 .error {
