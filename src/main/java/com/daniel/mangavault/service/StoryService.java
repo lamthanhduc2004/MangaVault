@@ -5,6 +5,7 @@ import com.daniel.mangavault.dto.request.StoryUpdateRequest;
 import com.daniel.mangavault.dto.response.PageResponse;
 import com.daniel.mangavault.dto.response.StoryResponse;
 import com.daniel.mangavault.entity.Story;
+import com.daniel.mangavault.enums.StoryStatus;
 import com.daniel.mangavault.exception.AppException;
 import com.daniel.mangavault.exception.ErrorCode;
 import com.daniel.mangavault.repository.ChapterRepository;
@@ -44,12 +45,17 @@ public class StoryService {
         return mapToStoryResponse(savedStory);
     }
 
-    public PageResponse<StoryResponse> getStories(String keyword, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    public PageResponse<StoryResponse> getStories(String keyword, StoryStatus status, String sort, int page, int size) {
+        // "updated" surfaces recently-updated stories (home page); default is newest first.
+        Sort sortSpec = "updated".equals(sort)
+                ? Sort.by(Sort.Direction.DESC, "updatedAt")
+                : Sort.by(Sort.Direction.DESC, "createdAt");
+        Pageable pageable = PageRequest.of(page, size, sortSpec);
 
-        Page<Story> storyPage = StringUtils.hasText(keyword)
-                ? storyRepository.findByTitleContainingIgnoreCase(keyword.trim(), pageable)
-                : storyRepository.findAll(pageable);
+        String kw = StringUtils.hasText(keyword) ? keyword.trim() : "";
+        Page<Story> storyPage = status != null
+                ? storyRepository.findByTitleContainingIgnoreCaseAndStatus(kw, status, pageable)
+                : storyRepository.findByTitleContainingIgnoreCase(kw, pageable);
 
         return PageResponse.from(storyPage, this::mapToStoryResponse);
     }

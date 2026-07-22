@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.stream.Collectors;
 
@@ -43,6 +44,17 @@ public class GlobalExceptionHandler {
         return ApiResponse.<Void>builder()
                 .code(4000)
                 .message("Malformed request body")
+                .build();
+    }
+
+    // e.g. ?status=NOT_A_STATUS — an invalid query/path parameter is a client
+    // error, not a server failure.
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleTypeMismatch(MethodArgumentTypeMismatchException exception){
+        return ApiResponse.<Void>builder()
+                .code(4000)
+                .message("Invalid value for parameter '" + exception.getName() + "'")
                 .build();
     }
 }

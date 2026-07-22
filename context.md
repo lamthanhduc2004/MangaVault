@@ -94,8 +94,14 @@ User đã quyết qua AskUserQuestion: **Admin CRUD làm TRƯỚC, Auth làm SAU
 - Frontend: `context/AuthContext.jsx`, interceptor token trong `services/api.js`, LoginPage/RegisterPage, `routes/RequireAdmin.jsx` bọc `/admin`, nav theo trạng thái đăng nhập.
 - Đã verify: ma trận quyền qua curl (no token 401, USER 403, ADMIN 200, token rác 401) + UI flow trên browser.
 
-### Giai đoạn 4 — Hoàn thiện demo bảo vệ
-- Trang chủ (truyện mới cập nhật), lọc theo trạng thái, tùy chọn đọc (cỡ chữ / nền tối — F22), cập nhật README + Postman collection.
+### Giai đoạn 4 — Hoàn thiện demo — ✅ HOÀN THÀNH (2026-07-22)
+- HomePage (`/`) mục "Truyện mới cập nhật" (sort=updated); danh sách đầy đủ ở `/stories` có lọc `status`.
+- API: `GET /api/stories` thêm `status` + `sort=latest|updated`; enum sai → 400/4000 (`MethodArgumentTypeMismatchException` handler).
+- **Nghiệp vụ quan trọng**: `ChapterService.createChapter` touch `story.updatedAt` cùng transaction — thêm chương làm truyện nổi lên "mới cập nhật".
+- Reader: 3 cỡ chữ + nền tối, lưu localStorage key `mv_reader_prefs`.
+- Postman collection viết lại (Auth/Public/Admin, auto-save adminToken).
+
+**→ Đủ 10/10 tính năng cốt lõi v1 theo tài liệu yêu cầu. Project sẵn sàng demo bảo vệ.**
 
 ## 7. Bẫy môi trường đã gặp (tránh lặp lại)
 

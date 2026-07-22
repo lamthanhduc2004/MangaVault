@@ -4,6 +4,7 @@ import com.daniel.mangavault.dto.response.ApiResponse;
 import com.daniel.mangavault.dto.response.ChapterSummaryResponse;
 import com.daniel.mangavault.dto.response.PageResponse;
 import com.daniel.mangavault.dto.response.StoryResponse;
+import com.daniel.mangavault.enums.StoryStatus;
 import com.daniel.mangavault.service.ChapterService;
 import com.daniel.mangavault.service.StoryService;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +22,13 @@ public class StoryController {
     @GetMapping
     public ApiResponse<PageResponse<StoryResponse>> getStories(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) StoryStatus status,
+            @RequestParam(defaultValue = "latest") String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
         return ApiResponse.<PageResponse<StoryResponse>>builder()
                 .code(1000)
-                .result(storyService.getStories(keyword, page, size))
+                .result(storyService.getStories(keyword, status, sort, page, size))
                 .build();
     }
 

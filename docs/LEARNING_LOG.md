@@ -1335,6 +1335,23 @@ Sau Task 3.10, project nhận tài liệu yêu cầu chính thức (`docs/HƯỚ
 - **Login không tiết lộ thông tin**: sai username hay sai password đều trả cùng một lỗi `INVALID_CREDENTIALS` — tránh cho kẻ dò biết username nào tồn tại.
 - **Frontend guard chỉ là UX**: `RequireAdmin` che trang, nhưng thứ thật sự chặn là Spring Security — đã test đủ ma trận: không token 401, USER token 403, ADMIN token 200, token rác 401.
 
-## Giai Đoạn Tiếp Theo
+## Giai Đoạn 4: Hoàn Thiện Demo
 
-- **Giai đoạn 4 — Hoàn thiện demo**: trang chủ truyện mới cập nhật, lọc trạng thái, tùy chọn đọc (cỡ chữ, nền tối), cập nhật Postman collection.
+### Những gì đã làm
+
+- Trang chủ (`/`) với mục "Truyện mới cập nhật"; danh sách đầy đủ chuyển sang `/stories`.
+- API danh sách nhận thêm `status` (lọc enum) và `sort` (`latest` | `updated`); tham số enum sai trả 400/4000 qua handler `MethodArgumentTypeMismatchException`.
+- Thêm chương mới "chạm" `updatedAt` của truyện trong cùng transaction — truyện có chương mới tự nổi lên đầu mục mới cập nhật.
+- Tùy chọn đọc: 3 cỡ chữ + nền tối, lưu `localStorage`, khôi phục khi quay lại.
+- Postman collection viết lại theo domain Story/Chapter: folder Auth/Public/Admin, login admin tự lưu token vào biến collection cho các request admin.
+
+### Bài học chính
+
+- **"Mới cập nhật" là nghiệp vụ, không phải kỹ thuật**: `@UpdateTimestamp` chỉ đổi khi chính entity đó dirty — thêm chương không tự làm truyện "mới cập nhật". Phải chủ động touch entity cha trong cùng transaction; đây là quyết định nghiệp vụ cần viết ra, không phải hành vi mặc định của ORM.
+- **Mẹo gộp filter tùy chọn**: `findByTitleContainingIgnoreCase("")` khớp mọi bản ghi, nên 2 method derived query phủ được cả 4 tổ hợp keyword × status — chưa cần tới Specification/Criteria API.
+- **Enum sai trong query param là lỗi client**: mặc định Spring ném `MethodArgumentTypeMismatchException` thành 500; phải bắt và trả 400 vì server không hề hỏng.
+- **Tùy chọn người dùng thuộc về client**: cỡ chữ/nền tối lưu `localStorage` là đủ — không cần API, không cần bảng DB; chỉ đưa lên server khi cần đồng bộ đa thiết bị.
+
+## Trạng Thái Cuối
+
+Cả 4 giai đoạn hoàn thành — đủ 10 tính năng cốt lõi v1 của tài liệu yêu cầu (`docs/HƯỚNG ĐI THỰC TẬP.md`): trang chủ, danh sách + lọc, tìm kiếm, chi tiết, mục lục chương, đọc chương, đăng ký, đăng nhập JWT, admin CRUD truyện, admin CRUD chương — với phân quyền GUEST/USER/ADMIN enforced ở backend.

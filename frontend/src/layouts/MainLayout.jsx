@@ -15,7 +15,8 @@ export default function MainLayout() {
       <header className="header">
         <Link to="/" className="brand">📚 MangaVault</Link>
         <nav>
-          <Link to="/" className="nav-link">Danh sách truyện</Link>
+          <Link to="/" className="nav-link">Trang chủ</Link>
+          <Link to="/stories" className="nav-link">Danh sách truyện</Link>
           {isAdmin && <Link to="/admin" className="nav-link">Quản trị</Link>}
           {user ? (
             <>

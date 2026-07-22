@@ -12,7 +12,9 @@ import com.daniel.mangavault.repository.ChapterRepository;
 import com.daniel.mangavault.repository.StoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -61,6 +63,7 @@ public class ChapterService {
                 .build();
     }
 
+    @Transactional // chapter insert + story touch must succeed or fail together
     public ChapterSummaryResponse createChapter(String storyId, ChapterCreationRequest request) {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new AppException(ErrorCode.STORY_NOT_FOUND));
@@ -76,7 +79,15 @@ public class ChapterService {
                 .content(request.getContent())
                 .build();
 
-        return mapToSummary(chapterRepository.save(chapter));
+        ChapterSummaryResponse response = mapToSummary(chapterRepository.save(chapter));
+
+        // A new chapter counts as a story update so the story surfaces in
+        // the "recently updated" home page sort. Marking the entity dirty
+        // lets @UpdateTimestamp regenerate updatedAt on flush.
+        story.setUpdatedAt(LocalDateTime.now());
+        storyRepository.save(story);
+
+        return response;
     }
 
     public ChapterSummaryResponse updateChapter(String id, ChapterUpdateRequest request) {

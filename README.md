@@ -24,7 +24,7 @@ React (Vite) — frontend/          Spring Boot 3.5 / Java 21 — repo root
 
 | Nhóm | Tính năng |
 |---|---|
-| Khách (GUEST) | Danh sách truyện (phân trang), tìm kiếm theo tên, chi tiết truyện, mục lục chương, đọc chương với điều hướng chương trước/sau |
+| Khách (GUEST) | Trang chủ truyện mới cập nhật, danh sách truyện (phân trang, lọc theo trạng thái), tìm kiếm theo tên, chi tiết truyện, mục lục chương, đọc chương (điều hướng trước/sau, tùy chọn cỡ chữ + nền tối) |
 | Thành viên (USER) | Đăng ký, đăng nhập JWT |
 | Quản trị (ADMIN, `/admin`) | CRUD truyện, CRUD chương (form thêm/sửa inline, tự gợi ý số chương kế tiếp) — bảo vệ bằng Spring Security + JWT, tài khoản admin khởi tạo tự động lúc start |
 
@@ -35,7 +35,8 @@ Response dùng chung envelope `ApiResponse<T>` `{ code, result, message }` — `
 ```text
 # Public
 GET    /api/health
-GET    /api/stories?keyword=&page=&size=      danh sách + tìm kiếm (sort mới nhất)
+GET    /api/stories?keyword=&status=&sort=&page=&size=
+                                              danh sách + tìm kiếm + lọc trạng thái (sort: latest|updated)
 GET    /api/stories/{id}                      chi tiết truyện
 GET    /api/stories/{id}/chapters             mục lục chương (không có nội dung)
 GET    /api/chapters/{id}                     nội dung chương + prev/next id
@@ -87,4 +88,4 @@ Tài khoản quản trị mặc định (tự tạo lần chạy đầu, đổi 
 | 1 | Domain Story/Chapter, API đọc công khai, frontend reader | ✅ Hoàn thành |
 | 2 | Admin CRUD truyện + chương, `ErrorCode` enum, slug unique | ✅ Hoàn thành |
 | 3 | Đăng ký/đăng nhập JWT, Spring Security, phân quyền GUEST/USER/ADMIN | ✅ Hoàn thành |
-| 4 | Trang chủ, lọc trạng thái, tùy chọn đọc, hoàn thiện tài liệu | ⏳ Tiếp theo |
+| 4 | Trang chủ, lọc trạng thái, tùy chọn đọc, hoàn thiện tài liệu | ✅ Hoàn thành |

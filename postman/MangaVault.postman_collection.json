@@ -1,18 +1,14 @@
 {
   "info": {
     "name": "MangaVault",
-    "description": "Initial requests for the MangaVault REST API",
+    "description": "MangaVault REST API — online story reading website.\n\nFlow: run 'Auth > Login (admin)' first; a test script stores the JWT into {{adminToken}} used by the Admin folder.\n\nError codes: 4041/4042 not found (404), 4090 slug / 4091 chapter number / 4092 username / 4093 email conflicts (409), 4011 bad credentials / 4010 missing token (401), 4030 wrong role (403), 4000 invalid input (400).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8080/api"
-    },
-    {
-      "key": "mangaId",
-      "value": "replace-with-manga-id"
-    }
+    { "key": "baseUrl", "value": "http://localhost:8080/api" },
+    { "key": "adminToken", "value": "" },
+    { "key": "storyId", "value": "replace-with-story-id" },
+    { "key": "chapterId", "value": "replace-with-chapter-id" }
   ],
   "item": [
     {
@@ -23,35 +19,162 @@
       }
     },
     {
-      "name": "List mangas",
-      "request": {
-        "method": "GET",
-        "url": "{{baseUrl}}/mangas"
-      }
-    },
-    {
-      "name": "Get manga by ID",
-      "request": {
-        "method": "GET",
-        "url": "{{baseUrl}}/mangas/{{mangaId}}"
-      }
-    },
-    {
-      "name": "Create manga",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"reader01\",\n  \"email\": \"reader01@test.com\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register"
           }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"Solo Leveling\",\n  \"slug\": \"solo-leveling\",\n  \"description\": \"A hunter grows stronger through a mysterious system.\",\n  \"coverUrl\": \"https://example.com/covers/solo-leveling.jpg\",\n  \"status\": \"ONGOING\",\n  \"visibility\": \"PUBLIC\"\n}"
         },
-        "url": "{{baseUrl}}/mangas"
-      }
+        {
+          "name": "Login (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.result && data.result.token) {",
+                  "  pm.collectionVariables.set('adminToken', data.result.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "List stories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/stories?keyword=&status=&sort=latest&page=0&size=12",
+              "host": ["{{baseUrl}}"],
+              "path": ["stories"],
+              "query": [
+                { "key": "keyword", "value": "", "description": "search by title" },
+                { "key": "status", "value": "", "description": "ONGOING | COMPLETED | HIATUS" },
+                { "key": "sort", "value": "latest", "description": "latest | updated" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "12" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get story by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/stories/{{storyId}}"
+          }
+        },
+        {
+          "name": "List chapters of story",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/stories/{{storyId}}/chapters"
+          }
+        },
+        {
+          "name": "Read chapter",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/chapters/{{chapterId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin (requires ADMIN token)",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{adminToken}}" }]
+      },
+      "item": [
+        {
+          "name": "Create story",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tên truyện mới\",\n  \"slug\": \"ten-truyen-moi\",\n  \"author\": \"Tác giả\",\n  \"description\": \"Mô tả ngắn.\",\n  \"coverUrl\": null,\n  \"status\": \"ONGOING\",\n  \"visibility\": \"PUBLIC\"\n}"
+            },
+            "url": "{{baseUrl}}/admin/stories"
+          }
+        },
+        {
+          "name": "Update story",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tên đã sửa\",\n  \"slug\": \"ten-truyen-moi\",\n  \"author\": \"Tác giả\",\n  \"description\": \"Mô tả đã sửa.\",\n  \"coverUrl\": null,\n  \"status\": \"COMPLETED\",\n  \"visibility\": \"PUBLIC\"\n}"
+            },
+            "url": "{{baseUrl}}/admin/stories/{{storyId}}"
+          }
+        },
+        {
+          "name": "Delete story (with chapters)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/admin/stories/{{storyId}}"
+          }
+        },
+        {
+          "name": "Create chapter",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chapterNumber\": 1,\n  \"title\": \"Tiêu đề chương\",\n  \"content\": \"Nội dung chương...\"\n}"
+            },
+            "url": "{{baseUrl}}/admin/stories/{{storyId}}/chapters"
+          }
+        },
+        {
+          "name": "Update chapter",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chapterNumber\": 1,\n  \"title\": \"Tiêu đề đã sửa\",\n  \"content\": \"Nội dung đã sửa...\"\n}"
+            },
+            "url": "{{baseUrl}}/admin/chapters/{{chapterId}}"
+          }
+        },
+        {
+          "name": "Delete chapter",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/admin/chapters/{{chapterId}}"
+          }
+        }
+      ]
     }
   ]
 }

@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
+import HomePage from '../pages/HomePage';
 import StoryListPage from '../pages/StoryListPage';
 import StoryDetailPage from '../pages/StoryDetailPage';
 import ChapterReaderPage from '../pages/ChapterReaderPage';
@@ -14,7 +15,8 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route element={<MainLayout />}>
-        <Route path="/" element={<StoryListPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/stories" element={<StoryListPage />} />
         <Route path="/stories/:id" element={<StoryDetailPage />} />
         <Route path="/chapters/:id" element={<ChapterReaderPage />} />
         <Route path="/login" element={<LoginPage />} />
