@@ -6,6 +6,7 @@ import com.daniel.mangavault.dto.response.AuthResponse;
 import com.daniel.mangavault.dto.response.UserResponse;
 import com.daniel.mangavault.entity.User;
 import com.daniel.mangavault.enums.Role;
+import com.daniel.mangavault.enums.UserStatus;
 import com.daniel.mangavault.exception.AppException;
 import com.daniel.mangavault.exception.ErrorCode;
 import com.daniel.mangavault.repository.UserRepository;
@@ -65,6 +66,11 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new AppException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        // Refuse to mint a token for a locked account.
+        if (user.getStatus() == UserStatus.BANNED) {
+            throw new AppException(ErrorCode.ACCOUNT_LOCKED);
         }
 
         return AuthResponse.builder()

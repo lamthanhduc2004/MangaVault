@@ -1,0 +1,15 @@
+target/
+frontend/
+docs/
+postman/
+.git/
+.github/
+.claude/
+.mvn/wrapper/maven-wrapper.jar
+**/node_modules/
+**/dist/
+*.md
+.env
+.env.*
+!.env.example
+docker-compose.yml

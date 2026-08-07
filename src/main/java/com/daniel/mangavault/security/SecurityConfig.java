@@ -51,10 +51,22 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // stateless JWT API — no session cookie to protect
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Matcher order matters: the user-scoped sub-paths of /api/stories must be
+                // declared before the blanket GET rule, or they would fall through as public.
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/health", "/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/stories/**", "/api/chapters/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/me", "/api/me/**").authenticated()
+                        .requestMatchers("/api/stories/*/follow").authenticated()
+                        // The average is public; only casting or clearing a vote needs an account.
+                        .requestMatchers(HttpMethod.PUT, "/api/stories/*/rating").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/stories/*/rating").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/stories/*/comments").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/comments/*/report").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/stories/**", "/api/chapters/**", "/api/genres/**")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
@@ -119,7 +131,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(allowedOrigins);
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -5,6 +5,7 @@ import com.daniel.mangavault.enums.Visibility;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,6 +21,12 @@ public class StoryResponse {
     private String coverUrl;
     private StoryStatus status;
     private Visibility visibility;
+    private long viewCount;
+    private double ratingAvg;
+    private int ratingCount;
+    /** Only populated on the story detail endpoint; null in list responses. */
+    private Long chapterCount;
+    private List<GenreResponse> genres;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

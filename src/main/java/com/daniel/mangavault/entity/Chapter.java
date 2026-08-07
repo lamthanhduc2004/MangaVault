@@ -50,6 +50,11 @@ public class Chapter {
     @Column(columnDefinition = "LONGTEXT")
     private String content;
 
+    // Defaults to TRUE so chapters created before this column existed stay visible.
+    @Builder.Default
+    @Column(columnDefinition = "BOOLEAN NOT NULL DEFAULT TRUE")
+    private boolean published = true;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

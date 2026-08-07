@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getStories } from '../../services/storyService';
-import { deleteStory } from '../../services/adminService';
+import { getAdminStories, deleteStory } from '../../services/adminService';
 import Pagination from '../../components/Pagination';
 import SearchBar from '../../components/SearchBar';
 import StatusBadge from '../../components/StatusBadge';
@@ -14,7 +13,7 @@ export default function AdminStoryListPage() {
 
   const load = useCallback(async () => {
     try {
-      setData(await getStories({ keyword, page, size: 10 }));
+      setData(await getAdminStories({ keyword, page, size: 10 }));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }

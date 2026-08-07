@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getStoryById, getChaptersOfStory, getChapterById } from '../../services/storyService';
-import { createChapter, updateChapter, deleteChapter } from '../../services/adminService';
+import {
+  createChapter,
+  updateChapter,
+  deleteChapter,
+  getAdminStoryById,
+  getAdminChapters,
+  getAdminChapterById,
+  setChapterPublished,
+} from '../../services/adminService';
 
 const EMPTY = { chapterNumber: '', title: '', content: '' };
 
@@ -18,7 +25,7 @@ export default function AdminChapterListPage() {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const [s, c] = await Promise.all([getStoryById(storyId), getChaptersOfStory(storyId)]);
+    const [s, c] = await Promise.all([getAdminStoryById(storyId), getAdminChapters(storyId)]);
     setStory(s);
     setChapters(c);
     return c;
@@ -36,7 +43,7 @@ export default function AdminChapterListPage() {
     setError(null);
     try {
       // Summaries never include content — fetch the full chapter.
-      const full = await getChapterById(summary.id);
+      const full = await getAdminChapterById(summary.id);
       setEditingId(summary.id);
       setForm({ chapterNumber: full.chapterNumber, title: full.title, content: full.content });
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -81,6 +88,16 @@ export default function AdminChapterListPage() {
     }
   };
 
+  const handleTogglePublish = async (chapter) => {
+    setError(null);
+    try {
+      await setChapterPublished(chapter.id, !chapter.published);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    }
+  };
+
   if (!story) return error ? <p className="error">Lỗi: {error}</p> : <p className="muted">Đang tải...</p>;
 
   return (
@@ -94,6 +111,7 @@ export default function AdminChapterListPage() {
           <tr>
             <th style={{ width: '90px' }}>Chương</th>
             <th>Tiêu đề</th>
+            <th style={{ width: '110px' }}>Hiển thị</th>
             <th></th>
           </tr>
         </thead>
@@ -104,7 +122,15 @@ export default function AdminChapterListPage() {
               <td>
                 <Link to={`/chapters/${chapter.id}`}>{chapter.title}</Link>
               </td>
+              <td>
+                <span className={`badge ${chapter.published ? 'badge-completed' : ''}`}>
+                  {chapter.published ? 'Công khai' : 'Đang ẩn'}
+                </span>
+              </td>
               <td className="table-actions">
+                <button onClick={() => handleTogglePublish(chapter)} className="btn-small">
+                  {chapter.published ? 'Ẩn' : 'Hiện'}
+                </button>
                 <button onClick={() => startEdit(chapter)} className="btn-small">Sửa</button>
                 <button onClick={() => handleDelete(chapter)} className="btn-small btn-danger">Xóa</button>
               </td>

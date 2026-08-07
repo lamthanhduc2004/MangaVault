@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Getter
 @Setter
 public class StoryCreationRequest {
@@ -31,4 +33,7 @@ public class StoryCreationRequest {
 
     @NotNull(message = "visibility is required")
     private Visibility visibility;
+
+    /** Optional — omitting it leaves the story without genres. */
+    private Set<String> genreIds;
 }

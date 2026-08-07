@@ -23,12 +23,13 @@ public class StoryController {
     public ApiResponse<PageResponse<StoryResponse>> getStories(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) StoryStatus status,
+            @RequestParam(required = false) String genre,
             @RequestParam(defaultValue = "latest") String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
         return ApiResponse.<PageResponse<StoryResponse>>builder()
                 .code(1000)
-                .result(storyService.getStories(keyword, status, sort, page, size))
+                .result(storyService.getStories(keyword, status, genre, sort, page, size))
                 .build();
     }
 

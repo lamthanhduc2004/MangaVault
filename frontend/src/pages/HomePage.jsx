@@ -3,13 +3,21 @@ import { Link } from 'react-router-dom';
 import { getStories } from '../services/storyService';
 import StoryCard from '../components/StoryCard';
 
+const SECTIONS = [
+  { key: 'updated', title: 'Truyện mới cập nhật', sort: 'updated' },
+  { key: 'rating', title: 'Truyện nổi bật', sort: 'rating' },
+  { key: 'views', title: 'Đọc nhiều nhất', sort: 'views' },
+];
+
 export default function HomePage() {
-  const [updated, setUpdated] = useState(null);
+  const [sections, setSections] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    getStories({ sort: 'updated', size: 8 })
-      .then((res) => setUpdated(res.items))
+    document.title = 'MangaVault — Đọc truyện chữ trực tuyến';
+    // One round-trip per section, fired together rather than sequentially.
+    Promise.all(SECTIONS.map((s) => getStories({ sort: s.sort, size: 8 })))
+      .then((results) => setSections(results.map((r) => r.items)))
       .catch((err) => setError(err.response?.data?.message || err.message));
   }, []);
 
@@ -20,23 +28,26 @@ export default function HomePage() {
         <p className="muted">Đọc truyện chữ trực tuyến — cập nhật mỗi ngày.</p>
       </section>
 
-      <section>
-        <div className="section-header">
-          <h2>Truyện mới cập nhật</h2>
-          <Link to="/stories" className="muted">Xem tất cả →</Link>
-        </div>
-        {error && <p className="error">Lỗi: {error}</p>}
-        {!updated && !error && <p className="muted">Đang tải...</p>}
-        {updated && (
-          updated.length === 0
-            ? <p className="muted">Chưa có truyện nào.</p>
-            : (
-              <div className="grid">
-                {updated.map((s) => <StoryCard key={s.id} story={s} />)}
-              </div>
-            )
-        )}
-      </section>
+      {error && <p className="error">Lỗi: {error}</p>}
+      {!sections && !error && <p className="muted">Đang tải...</p>}
+
+      {sections && SECTIONS.map((section, i) => (
+        sections[i].length > 0 && (
+          <section key={section.key} className="home-section">
+            <div className="section-header">
+              <h2>{section.title}</h2>
+              <Link to={`/stories?sort=${section.sort}`} className="muted">Xem tất cả →</Link>
+            </div>
+            <div className="grid">
+              {sections[i].map((s) => <StoryCard key={s.id} story={s} />)}
+            </div>
+          </section>
+        )
+      ))}
+
+      {sections && sections.every((items) => items.length === 0) && (
+        <p className="muted">Chưa có truyện nào.</p>
+      )}
     </div>
   );
 }

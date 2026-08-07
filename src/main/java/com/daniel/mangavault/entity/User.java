@@ -1,6 +1,7 @@
 package com.daniel.mangavault.entity;
 
 import com.daniel.mangavault.enums.Role;
+import com.daniel.mangavault.enums.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -45,6 +46,19 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    // Optional profile fields (F10). Avatar is a URL — no file upload.
+    @Column(name = "display_name")
+    private String displayName;
+
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
+    // DEFAULT required: ddl-auto=update does not backfill existing rows.
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'")
+    private UserStatus status = UserStatus.ACTIVE;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

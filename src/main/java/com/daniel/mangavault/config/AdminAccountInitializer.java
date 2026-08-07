@@ -26,9 +26,24 @@ public class AdminAccountInitializer {
     @Value("${app.admin.email}")
     private String adminEmail;
 
+    @Value("${app.jwt.secret}")
+    private String jwtSecret;
+
+    private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
+    private static final String DEFAULT_JWT_SECRET = "manga-vault-dev-secret-key-change-me-0123456789";
+
     @org.springframework.context.annotation.Bean
     CommandLineRunner initAdminAccount(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
+            // These defaults are published in the repository — anyone could sign an
+            // ADMIN token or log in. Loud enough to notice in a deployment log.
+            if (DEFAULT_JWT_SECRET.equals(jwtSecret)) {
+                log.error("JWT_SECRET is still the public development default. Set a random secret (>= 32 chars).");
+            }
+            if (DEFAULT_ADMIN_PASSWORD.equals(adminPassword)) {
+                log.error("ADMIN_PASSWORD is still the public development default. Set ADMIN_PASSWORD.");
+            }
+
             if (userRepository.existsByRole(Role.ADMIN)) {
                 return;
             }

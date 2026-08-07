@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getChapterById } from '../services/storyService';
+import { saveProgress } from '../services/libraryService';
+import { useAuth } from '../context/AuthContext';
 
 const FONT_SIZES = [
   { value: 'small', label: 'A', px: '0.95rem' },
@@ -19,6 +21,7 @@ const readPrefs = () => {
 export default function ChapterReaderPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [chapter, setChapter] = useState(null);
   const [error, setError] = useState(null);
   // Font size is reader-specific; the light/dark theme is global (ThemeContext).
@@ -31,9 +34,19 @@ export default function ChapterReaderPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
     getChapterById(id)
-      .then(setChapter)
+      .then((c) => {
+        setChapter(c);
+        document.title = `Chương ${c.chapterNumber} — ${c.storyTitle}`;
+      })
       .catch((err) => setError(err.response?.data?.message || err.message));
   }, [id]);
+
+  // Bookmark the position for signed-in readers. Failure is swallowed on purpose:
+  // losing a bookmark must never interrupt reading.
+  useEffect(() => {
+    if (!user) return;
+    saveProgress(id).catch(() => {});
+  }, [id, user]);
 
   if (error) {
     return (

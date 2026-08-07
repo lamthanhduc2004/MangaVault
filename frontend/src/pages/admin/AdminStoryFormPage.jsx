@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getStoryById } from '../../services/storyService';
-import { createStory, updateStory } from '../../services/adminService';
+import { createStory, updateStory, getAdminStoryById } from '../../services/adminService';
+import { getGenres } from '../../services/genreService';
 
 const INITIAL = {
   title: '',
@@ -11,19 +11,25 @@ const INITIAL = {
   coverUrl: '',
   status: 'ONGOING',
   visibility: 'PRIVATE',
+  genreIds: [],
 };
 
 export default function AdminStoryFormPage() {
   const { id } = useParams(); // undefined = create mode
   const [form, setForm] = useState(INITIAL);
+  const [genres, setGenres] = useState([]);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(Boolean(id));
   const navigate = useNavigate();
 
   useEffect(() => {
+    getGenres().then(setGenres).catch(() => setGenres([]));
+  }, []);
+
+  useEffect(() => {
     if (!id) return;
-    getStoryById(id)
+    getAdminStoryById(id)
       .then((story) =>
         setForm({
           title: story.title ?? '',
@@ -33,6 +39,7 @@ export default function AdminStoryFormPage() {
           coverUrl: story.coverUrl ?? '',
           status: story.status ?? 'ONGOING',
           visibility: story.visibility ?? 'PRIVATE',
+          genreIds: (story.genres ?? []).map((g) => g.id),
         }),
       )
       .catch((err) => setError(err.response?.data?.message || err.message))
@@ -40,6 +47,15 @@ export default function AdminStoryFormPage() {
   }, [id]);
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
+  const toggleGenre = (genreId) => {
+    setForm((f) => ({
+      ...f,
+      genreIds: f.genreIds.includes(genreId)
+        ? f.genreIds.filter((g) => g !== genreId)
+        : [...f.genreIds, genreId],
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,11 +90,11 @@ export default function AdminStoryFormPage() {
       <form onSubmit={handleSubmit} className="form">
         <label>
           Tên truyện *
-          <input value={form.title} onChange={set('title')} placeholder="Tên truyện" />
+          <input value={form.title} onChange={set('title')} required maxLength={255} placeholder="Tên truyện" />
         </label>
         <label>
           Slug *
-          <input value={form.slug} onChange={set('slug')} placeholder="ten-truyen" />
+          <input value={form.slug} onChange={set('slug')} required maxLength={255} placeholder="ten-truyen" />
         </label>
         <label>
           Tác giả
@@ -109,6 +125,23 @@ export default function AdminStoryFormPage() {
             </select>
           </label>
         </div>
+
+        <fieldset className="genre-picker">
+          <legend>Thể loại</legend>
+          {genres.length === 0
+            ? <p className="muted small">Chưa có thể loại nào — thêm ở mục Quản trị thể loại.</p>
+            : genres.map((genre) => (
+              <label key={genre.id} className="checkbox-chip">
+                <input
+                  type="checkbox"
+                  checked={form.genreIds.includes(genre.id)}
+                  onChange={() => toggleGenre(genre.id)}
+                />
+                {genre.name}
+              </label>
+            ))}
+        </fieldset>
+
         <button type="submit" className="btn-primary" disabled={saving}>
           {saving ? 'Đang lưu...' : id ? 'Cập nhật' : 'Lưu truyện'}
         </button>

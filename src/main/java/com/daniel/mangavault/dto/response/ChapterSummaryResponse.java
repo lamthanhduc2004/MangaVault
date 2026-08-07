@@ -14,6 +14,7 @@ public class ChapterSummaryResponse {
     private String id;
     private Integer chapterNumber;
     private String title;
+    private boolean published;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

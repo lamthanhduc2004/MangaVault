@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Getter
 @Setter
 public class StoryUpdateRequest {
@@ -31,4 +33,7 @@ public class StoryUpdateRequest {
 
     @NotNull(message = "visibility is required")
     private Visibility visibility;
+
+    /** Null leaves genres untouched; an empty set clears them. */
+    private Set<String> genreIds;
 }
