@@ -1,22 +1,23 @@
 {
   "info": {
     "name": "MangaVault",
-    "description": "MangaVault REST API — online story reading website.\n\nFlow: run 'Auth > Login (admin)' first; a test script stores the JWT into {{adminToken}} used by the Admin folder.\n\nError codes: 4041/4042 not found (404), 4090 slug / 4091 chapter number / 4092 username / 4093 email conflicts (409), 4011 bad credentials / 4010 missing token (401), 4030 wrong role (403), 4000 invalid input (400).",
+    "description": "MangaVault REST API — online story reading website.\n\nFlow: run 'Auth > Login (admin)' first; a test script stores the JWT into {{adminToken}} used by the Admin folder. Run 'Auth > Login (user)' for {{userToken}} used by the Library/Comments/Rating folders.\n\nbaseUrl defaults to local dev. For the live deployment, switch the collection variable to https://mangavault-hi7e.onrender.com/api (Render free tier sleeps after inactivity — first call may take 30-60s).\n\nError codes: 4041-4047 not found (404), 4090-4098 conflicts — slug/chapter number/username/email/genre name-slug/genre in use/already followed/already reported (409), 4010/4011/4031 authentication (401), 4030/4032/4033 authorization (403), 4000/4001 invalid input (400).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080/api" },
+    { "key": "baseUrl", "value": "http://localhost:8080/api", "description": "Switch to https://mangavault-hi7e.onrender.com/api for the live deployment" },
     { "key": "adminToken", "value": "" },
+    { "key": "userToken", "value": "" },
     { "key": "storyId", "value": "replace-with-story-id" },
-    { "key": "chapterId", "value": "replace-with-chapter-id" }
+    { "key": "chapterId", "value": "replace-with-chapter-id" },
+    { "key": "genreId", "value": "replace-with-genre-id" },
+    { "key": "commentId", "value": "replace-with-comment-id" },
+    { "key": "userId", "value": "replace-with-user-id" }
   ],
   "item": [
     {
       "name": "Health",
-      "request": {
-        "method": "GET",
-        "url": "{{baseUrl}}/health"
-      }
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
     },
     {
       "name": "Auth",
@@ -58,6 +59,32 @@
             },
             "url": "{{baseUrl}}/auth/login"
           }
+        },
+        {
+          "name": "Login (user)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.result && data.result.token) {",
+                  "  pm.collectionVariables.set('userToken', data.result.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"reader01\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login"
+          }
         }
       ]
     },
@@ -69,13 +96,14 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/stories?keyword=&status=&sort=latest&page=0&size=12",
+              "raw": "{{baseUrl}}/stories?keyword=&status=&genre=&sort=latest&page=0&size=12",
               "host": ["{{baseUrl}}"],
               "path": ["stories"],
               "query": [
-                { "key": "keyword", "value": "", "description": "search by title" },
+                { "key": "keyword", "value": "", "description": "matches title or author" },
                 { "key": "status", "value": "", "description": "ONGOING | COMPLETED | HIATUS" },
-                { "key": "sort", "value": "latest", "description": "latest | updated" },
+                { "key": "genre", "value": "", "description": "genre slug" },
+                { "key": "sort", "value": "latest", "description": "latest | updated | views | rating | title" },
                 { "key": "page", "value": "0" },
                 { "key": "size", "value": "12" }
               ]
@@ -84,95 +112,322 @@
         },
         {
           "name": "Get story by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/stories/{{storyId}}"
-          }
+          "request": { "method": "GET", "url": "{{baseUrl}}/stories/{{storyId}}" }
         },
         {
           "name": "List chapters of story",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/stories/{{storyId}}/chapters"
-          }
+          "request": { "method": "GET", "url": "{{baseUrl}}/stories/{{storyId}}/chapters" }
         },
         {
           "name": "Read chapter",
+          "request": { "method": "GET", "url": "{{baseUrl}}/chapters/{{chapterId}}" }
+        },
+        {
+          "name": "List genres",
+          "request": { "method": "GET", "url": "{{baseUrl}}/genres" }
+        },
+        {
+          "name": "Get rating summary",
+          "request": { "method": "GET", "url": "{{baseUrl}}/stories/{{storyId}}/rating" }
+        },
+        {
+          "name": "List comments",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/chapters/{{chapterId}}"
+            "url": "{{baseUrl}}/stories/{{storyId}}/comments?page=0&size=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Library (requires user token)",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{userToken}}" }] },
+      "item": [
+        {
+          "name": "Get my profile",
+          "request": { "method": "GET", "url": "{{baseUrl}}/me" }
+        },
+        {
+          "name": "Update profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Reader One\",\n  \"avatarUrl\": null\n}"
+            },
+            "url": "{{baseUrl}}/me"
+          }
+        },
+        {
+          "name": "Change password",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"secret123\",\n  \"newPassword\": \"newSecret456\"\n}"
+            },
+            "url": "{{baseUrl}}/me/password"
+          }
+        },
+        {
+          "name": "Follow story",
+          "request": { "method": "POST", "url": "{{baseUrl}}/stories/{{storyId}}/follow" }
+        },
+        {
+          "name": "Unfollow story",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/stories/{{storyId}}/follow" }
+        },
+        {
+          "name": "List my follows",
+          "request": { "method": "GET", "url": "{{baseUrl}}/me/follows?page=0&size=12" }
+        },
+        {
+          "name": "Save reading progress",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chapterId\": \"{{chapterId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/me/history"
+          }
+        },
+        {
+          "name": "List reading history",
+          "request": { "method": "GET", "url": "{{baseUrl}}/me/history?page=0&size=12" }
+        },
+        {
+          "name": "Get resume position for a story",
+          "request": { "method": "GET", "url": "{{baseUrl}}/me/history/{{storyId}}" }
+        },
+        {
+          "name": "Rate story",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"score\": 5\n}" },
+            "url": "{{baseUrl}}/stories/{{storyId}}/rating"
+          }
+        },
+        {
+          "name": "Remove my rating",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/stories/{{storyId}}/rating" }
+        },
+        {
+          "name": "Post comment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"content\": \"Truyện hay quá!\"\n}" },
+            "url": "{{baseUrl}}/stories/{{storyId}}/comments"
+          }
+        },
+        {
+          "name": "Update my comment",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"content\": \"Đã sửa bình luận.\"\n}" },
+            "url": "{{baseUrl}}/comments/{{commentId}}"
+          }
+        },
+        {
+          "name": "Delete my comment",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/comments/{{commentId}}" }
+        },
+        {
+          "name": "Report comment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Nội dung không phù hợp\"\n}" },
+            "url": "{{baseUrl}}/comments/{{commentId}}/report"
           }
         }
       ]
     },
     {
       "name": "Admin (requires ADMIN token)",
-      "auth": {
-        "type": "bearer",
-        "bearer": [{ "key": "token", "value": "{{adminToken}}" }]
-      },
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}" }] },
       "item": [
         {
-          "name": "Create story",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Tên truyện mới\",\n  \"slug\": \"ten-truyen-moi\",\n  \"author\": \"Tác giả\",\n  \"description\": \"Mô tả ngắn.\",\n  \"coverUrl\": null,\n  \"status\": \"ONGOING\",\n  \"visibility\": \"PUBLIC\"\n}"
+          "name": "Stories",
+          "item": [
+            {
+              "name": "List stories (includes hidden)",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/admin/stories?keyword=&status=&visibility=&genre=&sort=latest&page=0&size=10"
+              }
             },
-            "url": "{{baseUrl}}/admin/stories"
-          }
-        },
-        {
-          "name": "Update story",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Tên đã sửa\",\n  \"slug\": \"ten-truyen-moi\",\n  \"author\": \"Tác giả\",\n  \"description\": \"Mô tả đã sửa.\",\n  \"coverUrl\": null,\n  \"status\": \"COMPLETED\",\n  \"visibility\": \"PUBLIC\"\n}"
+            {
+              "name": "Get story by ID",
+              "request": { "method": "GET", "url": "{{baseUrl}}/admin/stories/{{storyId}}" }
             },
-            "url": "{{baseUrl}}/admin/stories/{{storyId}}"
-          }
-        },
-        {
-          "name": "Delete story (with chapters)",
-          "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/admin/stories/{{storyId}}"
-          }
-        },
-        {
-          "name": "Create chapter",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"chapterNumber\": 1,\n  \"title\": \"Tiêu đề chương\",\n  \"content\": \"Nội dung chương...\"\n}"
+            {
+              "name": "List chapters (includes hidden)",
+              "request": { "method": "GET", "url": "{{baseUrl}}/admin/stories/{{storyId}}/chapters" }
             },
-            "url": "{{baseUrl}}/admin/stories/{{storyId}}/chapters"
-          }
-        },
-        {
-          "name": "Update chapter",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"chapterNumber\": 1,\n  \"title\": \"Tiêu đề đã sửa\",\n  \"content\": \"Nội dung đã sửa...\"\n}"
+            {
+              "name": "Create story",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Tên truyện mới\",\n  \"slug\": \"ten-truyen-moi\",\n  \"author\": \"Tác giả\",\n  \"description\": \"Mô tả ngắn.\",\n  \"coverUrl\": null,\n  \"status\": \"ONGOING\",\n  \"visibility\": \"PUBLIC\",\n  \"genreIds\": []\n}"
+                },
+                "url": "{{baseUrl}}/admin/stories"
+              }
             },
-            "url": "{{baseUrl}}/admin/chapters/{{chapterId}}"
-          }
+            {
+              "name": "Update story",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Tên đã sửa\",\n  \"slug\": \"ten-truyen-moi\",\n  \"author\": \"Tác giả\",\n  \"description\": \"Mô tả đã sửa.\",\n  \"coverUrl\": null,\n  \"status\": \"COMPLETED\",\n  \"visibility\": \"PUBLIC\",\n  \"genreIds\": null\n}"
+                },
+                "url": "{{baseUrl}}/admin/stories/{{storyId}}"
+              }
+            },
+            {
+              "name": "Delete story (with chapters)",
+              "request": { "method": "DELETE", "url": "{{baseUrl}}/admin/stories/{{storyId}}" }
+            }
+          ]
         },
         {
-          "name": "Delete chapter",
-          "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/admin/chapters/{{chapterId}}"
-          }
+          "name": "Chapters",
+          "item": [
+            {
+              "name": "Create chapter",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"chapterNumber\": 1,\n  \"title\": \"Tiêu đề chương\",\n  \"content\": \"Nội dung chương...\"\n}"
+                },
+                "url": "{{baseUrl}}/admin/stories/{{storyId}}/chapters"
+              }
+            },
+            {
+              "name": "Get chapter (admin view)",
+              "request": { "method": "GET", "url": "{{baseUrl}}/admin/chapters/{{chapterId}}" }
+            },
+            {
+              "name": "Update chapter",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"chapterNumber\": 1,\n  \"title\": \"Tiêu đề đã sửa\",\n  \"content\": \"Nội dung đã sửa...\"\n}"
+                },
+                "url": "{{baseUrl}}/admin/chapters/{{chapterId}}"
+              }
+            },
+            {
+              "name": "Toggle publish",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"published\": false\n}" },
+                "url": "{{baseUrl}}/admin/chapters/{{chapterId}}/publish"
+              }
+            },
+            {
+              "name": "Delete chapter",
+              "request": { "method": "DELETE", "url": "{{baseUrl}}/admin/chapters/{{chapterId}}" }
+            }
+          ]
+        },
+        {
+          "name": "Genres",
+          "item": [
+            {
+              "name": "List genres",
+              "request": { "method": "GET", "url": "{{baseUrl}}/admin/genres" }
+            },
+            {
+              "name": "Create genre",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tiên hiệp\",\n  \"slug\": \"tien-hiep\"\n}" },
+                "url": "{{baseUrl}}/admin/genres"
+              }
+            },
+            {
+              "name": "Update genre",
+              "request": {
+                "method": "PUT",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tiên hiệp\",\n  \"slug\": \"tien-hiep\"\n}" },
+                "url": "{{baseUrl}}/admin/genres/{{genreId}}"
+              }
+            },
+            {
+              "name": "Delete genre",
+              "request": { "method": "DELETE", "url": "{{baseUrl}}/admin/genres/{{genreId}}" }
+            }
+          ]
+        },
+        {
+          "name": "Users",
+          "item": [
+            {
+              "name": "List users",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/admin/users?keyword=&role=&status=&page=0&size=10"
+              }
+            },
+            {
+              "name": "Set user status (ban/unban)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"status\": \"BANNED\"\n}" },
+                "url": "{{baseUrl}}/admin/users/{{userId}}/status"
+              }
+            },
+            {
+              "name": "Set user role",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"role\": \"ADMIN\"\n}" },
+                "url": "{{baseUrl}}/admin/users/{{userId}}/role"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Moderation & Stats",
+          "item": [
+            {
+              "name": "List reported comments",
+              "request": { "method": "GET", "url": "{{baseUrl}}/admin/comments/reported?page=0&size=10" }
+            },
+            {
+              "name": "Dismiss reports",
+              "request": { "method": "POST", "url": "{{baseUrl}}/admin/comments/{{commentId}}/dismiss-reports" }
+            },
+            {
+              "name": "Delete comment",
+              "request": { "method": "DELETE", "url": "{{baseUrl}}/admin/comments/{{commentId}}" }
+            },
+            {
+              "name": "Dashboard stats",
+              "request": { "method": "GET", "url": "{{baseUrl}}/admin/stats" }
+            }
+          ]
         }
       ]
     }
