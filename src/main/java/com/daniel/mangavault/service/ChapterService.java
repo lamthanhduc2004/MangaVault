@@ -158,6 +158,39 @@ public class ChapterService {
         return mapToSummary(chapterRepository.save(chapter));
     }
 
+    /**
+     * Swaps chapterNumber with the adjacent chapter (F17 reorder). The unique
+     * constraint on (story_id, chapter_number) means a naive two-statement swap
+     * fails mid-transaction — the moving chapter is parked on a negative,
+     * certainly-unused number first.
+     */
+    @Transactional
+    public void moveChapter(String id, boolean moveUp) {
+        Chapter chapter = chapterRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CHAPTER_NOT_FOUND));
+        String storyId = chapter.getStory().getId();
+
+        Chapter neighbor = (moveUp
+                ? chapterRepository.findFirstByStoryIdAndChapterNumberLessThanOrderByChapterNumberDesc(
+                        storyId, chapter.getChapterNumber())
+                : chapterRepository.findFirstByStoryIdAndChapterNumberGreaterThanOrderByChapterNumberAsc(
+                        storyId, chapter.getChapterNumber()))
+                .orElse(null);
+        if (neighbor == null) {
+            return; // already at the edge — nothing to do
+        }
+
+        int a = chapter.getChapterNumber();
+        int b = neighbor.getChapterNumber();
+
+        chapter.setChapterNumber(-1);
+        chapterRepository.saveAndFlush(chapter);
+        neighbor.setChapterNumber(a);
+        chapterRepository.saveAndFlush(neighbor);
+        chapter.setChapterNumber(b);
+        chapterRepository.saveAndFlush(chapter);
+    }
+
     public ChapterSummaryResponse setPublished(String id, boolean published) {
         Chapter chapter = chapterRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CHAPTER_NOT_FOUND));

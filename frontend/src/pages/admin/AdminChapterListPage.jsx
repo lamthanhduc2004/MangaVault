@@ -8,6 +8,7 @@ import {
   getAdminChapters,
   getAdminChapterById,
   setChapterPublished,
+  moveChapter,
 } from '../../services/adminService';
 
 const EMPTY = { chapterNumber: '', title: '', content: '' };
@@ -98,6 +99,16 @@ export default function AdminChapterListPage() {
     }
   };
 
+  const handleMove = async (chapter, direction) => {
+    setError(null);
+    try {
+      await moveChapter(chapter.id, direction);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    }
+  };
+
   if (!story) return error ? <p className="error">Lỗi: {error}</p> : <p className="muted">Đang tải...</p>;
 
   return (
@@ -116,7 +127,7 @@ export default function AdminChapterListPage() {
           </tr>
         </thead>
         <tbody>
-          {chapters.map((chapter) => (
+          {chapters.map((chapter, index) => (
             <tr key={chapter.id}>
               <td>{chapter.chapterNumber}</td>
               <td>
@@ -128,6 +139,22 @@ export default function AdminChapterListPage() {
                 </span>
               </td>
               <td className="table-actions">
+                <button
+                  onClick={() => handleMove(chapter, 'UP')}
+                  className="btn-small"
+                  disabled={index === 0}
+                  title="Đổi lên trên"
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => handleMove(chapter, 'DOWN')}
+                  className="btn-small"
+                  disabled={index === chapters.length - 1}
+                  title="Đổi xuống dưới"
+                >
+                  ↓
+                </button>
                 <button onClick={() => handleTogglePublish(chapter)} className="btn-small">
                   {chapter.published ? 'Ẩn' : 'Hiện'}
                 </button>

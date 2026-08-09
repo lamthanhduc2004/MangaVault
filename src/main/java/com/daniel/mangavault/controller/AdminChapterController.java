@@ -48,6 +48,19 @@ public class AdminChapterController {
         private boolean published;
     }
 
+    /** Swaps this chapter's number with its neighbor (F17 reorder). No-op at the edge. */
+    @PatchMapping("/{id}/move")
+    public ApiResponse<Void> moveChapter(@PathVariable String id, @RequestBody MoveRequest request) {
+        chapterService.moveChapter(id, "UP".equalsIgnoreCase(request.getDirection()));
+        return ApiResponse.<Void>builder().code(1000).build();
+    }
+
+    @lombok.Getter
+    @lombok.Setter
+    public static class MoveRequest {
+        private String direction; // "UP" | "DOWN"
+    }
+
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deleteChapter(@PathVariable String id) {
         chapterService.deleteChapter(id);

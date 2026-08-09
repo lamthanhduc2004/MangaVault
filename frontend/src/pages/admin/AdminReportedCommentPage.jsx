@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getReportedComments, dismissReports, deleteCommentAsAdmin } from '../../services/commentService';
+import { setUserStatus } from '../../services/userService';
 import Pagination from '../../components/Pagination';
 import { formatDateTime } from '../../utils/format';
 
@@ -43,6 +44,19 @@ export default function AdminReportedCommentPage() {
     }
   };
 
+  // Lets the moderator ban a repeat offender directly from the queue instead
+  // of hunting them down in the user management page.
+  const handleBanAuthor = async (row) => {
+    if (!window.confirm(`Khóa tài khoản "${row.authorUsername}"? Người này sẽ không đăng nhập được nữa.`)) return;
+    setError(null);
+    try {
+      await setUserStatus(row.authorId, 'BANNED');
+      window.alert(`Đã khóa tài khoản "${row.authorUsername}".`);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+    }
+  };
+
   return (
     <div>
       <p className="small"><Link to="/admin">← Quản trị</Link></p>
@@ -68,7 +82,8 @@ export default function AdminReportedCommentPage() {
             </div>
             <div className="library-actions">
               <button className="btn-small" onClick={() => handleDismiss(row)}>Bỏ qua</button>
-              <button className="btn-small btn-danger" onClick={() => handleDelete(row)}>Xóa</button>
+              <button className="btn-small btn-danger" onClick={() => handleDelete(row)}>Xóa bình luận</button>
+              <button className="btn-small btn-danger" onClick={() => handleBanAuthor(row)}>Khóa tài khoản</button>
             </div>
           </li>
         ))}

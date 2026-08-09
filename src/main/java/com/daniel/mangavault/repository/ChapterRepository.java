@@ -26,6 +26,13 @@ public interface ChapterRepository extends JpaRepository<Chapter, String> {
 
     Optional<Chapter> findFirstByStoryIdAndPublishedTrueOrderByChapterNumberAsc(String storyId);
 
+    // Admin reorder (F17) must see hidden chapters too, so these have no published filter.
+    Optional<Chapter> findFirstByStoryIdAndChapterNumberLessThanOrderByChapterNumberDesc(
+            String storyId, Integer chapterNumber);
+
+    Optional<Chapter> findFirstByStoryIdAndChapterNumberGreaterThanOrderByChapterNumberAsc(
+            String storyId, Integer chapterNumber);
+
     long countByStoryIdAndPublishedTrue(String storyId);
 
     boolean existsByStoryIdAndChapterNumber(String storyId, Integer chapterNumber);

@@ -10,6 +10,12 @@ const FONT_SIZES = [
   { value: 'large', label: 'A', px: '1.2rem' },
 ];
 
+const LINE_HEIGHTS = [
+  { value: 'compact', label: 'Hẹp', lh: '1.5' },
+  { value: 'normal', label: 'Vừa', lh: '1.9' },
+  { value: 'relaxed', label: 'Rộng', lh: '2.4' },
+];
+
 const readPrefs = () => {
   try {
     return JSON.parse(localStorage.getItem('mv_reader_prefs')) ?? {};
@@ -24,12 +30,13 @@ export default function ChapterReaderPage() {
   const { user } = useAuth();
   const [chapter, setChapter] = useState(null);
   const [error, setError] = useState(null);
-  // Font size is reader-specific; the light/dark theme is global (ThemeContext).
+  // Font size and line height are reader-specific; the light/dark theme is global (ThemeContext).
   const [fontSize, setFontSize] = useState(() => readPrefs().fontSize ?? 'medium');
+  const [lineHeight, setLineHeight] = useState(() => readPrefs().lineHeight ?? 'normal');
 
   useEffect(() => {
-    localStorage.setItem('mv_reader_prefs', JSON.stringify({ fontSize }));
-  }, [fontSize]);
+    localStorage.setItem('mv_reader_prefs', JSON.stringify({ fontSize, lineHeight }));
+  }, [fontSize, lineHeight]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -59,6 +66,7 @@ export default function ChapterReaderPage() {
   if (!chapter) return <p className="muted">Đang tải...</p>;
 
   const fontPx = FONT_SIZES.find((f) => f.value === fontSize)?.px ?? '1.05rem';
+  const lineHeightValue = LINE_HEIGHTS.find((l) => l.value === lineHeight)?.lh ?? '1.9';
 
   const nav = (
     <div className="reader-nav">
@@ -99,10 +107,21 @@ export default function ChapterReaderPage() {
             {f.label}
           </button>
         ))}
+        <span className="muted small" style={{ marginLeft: '0.5rem' }}>Giãn dòng:</span>
+        {LINE_HEIGHTS.map((l) => (
+          <button
+            key={l.value}
+            className={`font-btn${lineHeight === l.value ? ' active' : ''}`}
+            onClick={() => setLineHeight(l.value)}
+            title={`Giãn dòng ${l.label}`}
+          >
+            {l.label}
+          </button>
+        ))}
       </div>
 
       {nav}
-      <article className="reader-content" style={{ fontSize: fontPx }}>
+      <article className="reader-content" style={{ fontSize: fontPx, lineHeight: lineHeightValue }}>
         {chapter.content
           ? chapter.content.split('\n').map((p, i) => p.trim() && <p key={i}>{p}</p>)
           : <p className="muted">Chương này chưa có nội dung.</p>}

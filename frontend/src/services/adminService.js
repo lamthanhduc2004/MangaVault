@@ -65,6 +65,12 @@ export async function setChapterPublished(id, published) {
   return res.data.result;
 }
 
+// Swaps chapterNumber with the neighbor above/below (F17 reorder).
+export async function moveChapter(id, direction) {
+  const res = await api.patch(`/admin/chapters/${id}/move`, { direction });
+  return res.data;
+}
+
 export async function deleteChapter(id) {
   const res = await api.delete(`/admin/chapters/${id}`);
   return res.data;
