@@ -114,7 +114,7 @@ public class DemoDataInitializer {
                     .description(seed.description())
                     .status(seed.status())
                     .visibility(Visibility.PUBLIC)
-                    .coverUrl(coverUrlFor(seed.coverSeed()))
+                    .coverUrl(coverUrlFor(seed.title(), seed.slug()))
                     .genres(genres)
                     .build());
 
@@ -137,15 +137,12 @@ public class DemoDataInitializer {
     /**
      * Fills in a cover for any story that doesn't have one yet — including the
      * original demo stories seeded before cover art was part of the catalogue.
-     * Uses Lorem Picsum (picsum.photos), a free placeholder-image service; these
-     * are generic stock photos standing in for real cover art, not official
-     * artwork for the stories.
      */
     private void backfillCovers(StoryRepository storyRepository) {
         int filled = 0;
         for (Story story : storyRepository.findAll()) {
             if (story.getCoverUrl() == null || story.getCoverUrl().isBlank()) {
-                story.setCoverUrl(coverUrlFor(story.getSlug()));
+                story.setCoverUrl(coverUrlFor(story.getTitle(), story.getSlug()));
                 filled++;
             }
         }
@@ -154,10 +151,25 @@ public class DemoDataInitializer {
         }
     }
 
-    private static String coverUrlFor(String seed) {
-        // A fixed seed makes the "random" photo deterministic per story instead of
-        // changing on every page load.
-        return "https://picsum.photos/seed/" + seed + "/480/680";
+    // A small, high-contrast palette; each story gets one color deterministically
+    // from its slug, so the same story always renders the same cover.
+    private static final String[] COVER_COLORS = {
+            "4f46e5", "0891b2", "b45309", "be185d", "15803d", "7c3aed", "b91c1c", "0f766e"
+    };
+
+    /**
+     * Builds a title-card cover via placehold.co (free placeholder-image service):
+     * a solid color background with the story title rendered as text. Earlier this
+     * used Lorem Picsum's random stock photos, but a landscape/object photo picked
+     * by hash has no relationship to the story at all and reads as simply wrong
+     * next to the title. A title card is honestly a placeholder — not official
+     * cover art — without pretending to depict anything.
+     */
+    private static String coverUrlFor(String title, String slug) {
+        String color = COVER_COLORS[Math.floorMod(slug.hashCode(), COVER_COLORS.length)];
+        String encodedTitle = java.net.URLEncoder.encode(title, java.nio.charset.StandardCharsets.UTF_8)
+                .replace("+", "%20");
+        return "https://placehold.co/480x680/" + color + "/ffffff/png?text=" + encodedTitle + "&font=roboto";
     }
 
     private static List<SeedStory> catalogue() {
