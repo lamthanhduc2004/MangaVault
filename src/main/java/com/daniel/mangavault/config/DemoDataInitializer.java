@@ -13,11 +13,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -37,7 +38,7 @@ public class DemoDataInitializer {
 
     @Bean
     CommandLineRunner seedDemoData(StoryRepository storyRepository, ChapterRepository chapterRepository,
-                                   GenreRepository genreRepository) {
+                                   GenreRepository genreRepository, PlatformTransactionManager txManager) {
         return args -> {
             if (storyRepository.count() == 0) {
                 log.info("Empty catalogue detected — seeding demo stories.");
@@ -71,7 +72,18 @@ public class DemoDataInitializer {
             // so it still runs — and backfills the existing demo stories — against a
             // database that was seeded before genres existed, without re-touching
             // story/chapter content.
-            seedGenres(storyRepository, genreRepository);
+            //
+            // Run inside one explicit transaction (TransactionTemplate, not
+            // @Transactional): a CommandLineRunner executes before any web request,
+            // so there is no Open-Session-In-View to keep entities attached between
+            // separate repository calls. Fetching a Story in one call and mutating
+            // its lazy `genres` collection in a later, separate call operates on a
+            // detached entity — the change is silently lost on save() instead of
+            // being flushed. A single transaction keeps every entity managed for
+            // the whole block, so plain field mutation is enough; Hibernate's
+            // dirty-checking flushes it on commit.
+            new TransactionTemplate(txManager).executeWithoutResult(status ->
+                    seedGenres(storyRepository, genreRepository));
         };
     }
 
@@ -101,27 +113,31 @@ public class DemoDataInitializer {
             GENRES.forEach((name, slug) -> genreRepository.save(Genre.builder().name(name).slug(slug).build()));
         }
 
-        for (Map.Entry<String, List<String>> entry : STORY_GENRES.entrySet()) {
-            Optional<Story> storyOpt = storyRepository.findAll().stream()
-                    .filter(s -> s.getSlug().equals(entry.getKey()))
-                    .findFirst();
-            if (storyOpt.isEmpty()) {
-                continue; // demo story not present (custom deployment) — nothing to backfill
-            }
-            Story story = storyOpt.get();
-            if (!story.getGenres().isEmpty()) {
-                continue; // already assigned — don't clobber admin edits
+        Map<String, Genre> genresBySlug = genreRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.toMap(Genre::getSlug, g -> g));
+
+        int assigned = 0;
+        for (Story story : storyRepository.findAll()) {
+            List<String> genreSlugs = STORY_GENRES.get(story.getSlug());
+            if (genreSlugs == null || !story.getGenres().isEmpty()) {
+                continue; // not a known demo story, or already assigned — don't clobber admin edits
             }
 
             Set<Genre> genres = new LinkedHashSet<>();
-            for (String genreSlug : entry.getValue()) {
-                genreRepository.findAll().stream()
-                        .filter(g -> g.getSlug().equals(genreSlug))
-                        .findFirst()
-                        .ifPresent(genres::add);
+            for (String genreSlug : genreSlugs) {
+                Genre genre = genresBySlug.get(genreSlug);
+                if (genre != null) {
+                    genres.add(genre);
+                }
             }
             story.setGenres(genres);
-            storyRepository.save(story);
+            assigned++;
+        }
+        // No explicit save() needed: `story` is a managed entity inside the
+        // enclosing transaction, so Hibernate flushes the mutation on commit.
+
+        if (assigned > 0) {
+            log.info("Backfilled genres onto {} demo stories.", assigned);
         }
     }
 
