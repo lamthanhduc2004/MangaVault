@@ -1,10 +1,12 @@
 package com.daniel.mangavault.config;
 
 import com.daniel.mangavault.entity.Chapter;
+import com.daniel.mangavault.entity.Genre;
 import com.daniel.mangavault.entity.Story;
 import com.daniel.mangavault.enums.StoryStatus;
 import com.daniel.mangavault.enums.Visibility;
 import com.daniel.mangavault.repository.ChapterRepository;
+import com.daniel.mangavault.repository.GenreRepository;
 import com.daniel.mangavault.repository.StoryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -12,7 +14,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Seeds a small catalogue the first time the application starts against an empty
@@ -30,37 +36,93 @@ public class DemoDataInitializer {
                              StoryStatus status, List<SeedChapter> chapters) {}
 
     @Bean
-    CommandLineRunner seedDemoData(StoryRepository storyRepository, ChapterRepository chapterRepository) {
+    CommandLineRunner seedDemoData(StoryRepository storyRepository, ChapterRepository chapterRepository,
+                                   GenreRepository genreRepository) {
         return args -> {
-            if (storyRepository.count() > 0) {
-                return;
-            }
+            if (storyRepository.count() == 0) {
+                log.info("Empty catalogue detected — seeding demo stories.");
 
-            log.info("Empty catalogue detected — seeding demo stories.");
-
-            for (SeedStory seed : catalogue()) {
-                Story story = storyRepository.save(Story.builder()
-                        .title(seed.title())
-                        .slug(seed.slug())
-                        .author(seed.author())
-                        .description(seed.description())
-                        .status(seed.status())
-                        .visibility(Visibility.PUBLIC)
-                        .build());
-
-                for (SeedChapter chapter : seed.chapters()) {
-                    chapterRepository.save(Chapter.builder()
-                            .story(story)
-                            .chapterNumber(chapter.number())
-                            .title(chapter.title())
-                            .content(chapter.content())
-                            .published(true)
+                for (SeedStory seed : catalogue()) {
+                    Story story = storyRepository.save(Story.builder()
+                            .title(seed.title())
+                            .slug(seed.slug())
+                            .author(seed.author())
+                            .description(seed.description())
+                            .status(seed.status())
+                            .visibility(Visibility.PUBLIC)
                             .build());
+
+                    for (SeedChapter chapter : seed.chapters()) {
+                        chapterRepository.save(Chapter.builder()
+                                .story(story)
+                                .chapterNumber(chapter.number())
+                                .title(chapter.title())
+                                .content(chapter.content())
+                                .published(true)
+                                .build());
+                    }
                 }
+
+                log.info("Seeded {} demo stories.", catalogue().size());
             }
 
-            log.info("Seeded {} demo stories.", catalogue().size());
+            // Genres were added in a later feature pass. Kept as a separate,
+            // independently-guarded step (rather than folded into the block above)
+            // so it still runs — and backfills the existing demo stories — against a
+            // database that was seeded before genres existed, without re-touching
+            // story/chapter content.
+            seedGenres(storyRepository, genreRepository);
         };
+    }
+
+    /** name -> slug for the demo catalogue's genres. */
+    private static final Map<String, String> GENRES = Map.of(
+            "Tiên hiệp", "tien-hiep",
+            "Huyền huyễn", "huyen-huyen",
+            "Kiếm hiệp", "kiem-hiep",
+            "Đô thị", "do-thi",
+            "Trọng sinh", "trong-sinh",
+            "Dị giới", "di-gioi"
+    );
+
+    /** slug -> genre slugs assigned to that demo story. */
+    private static final Map<String, List<String>> STORY_GENRES = Map.of(
+            "dau-pha-thuong-khung", List.of("tien-hiep", "huyen-huyen"),
+            "toan-chuc-cao-thu", List.of("do-thi"),
+            "pham-nhan-tu-tien", List.of("tien-hiep"),
+            "than-dao-dan-ton", List.of("tien-hiep", "trong-sinh"),
+            "vu-dong-can-khon", List.of("huyen-huyen", "di-gioi"),
+            "tien-nghich", List.of("tien-hiep", "kiem-hiep")
+    );
+
+    private void seedGenres(StoryRepository storyRepository, GenreRepository genreRepository) {
+        if (genreRepository.count() == 0) {
+            log.info("No genres found — seeding the demo genre catalogue.");
+            GENRES.forEach((name, slug) -> genreRepository.save(Genre.builder().name(name).slug(slug).build()));
+        }
+
+        for (Map.Entry<String, List<String>> entry : STORY_GENRES.entrySet()) {
+            Optional<Story> storyOpt = storyRepository.findAll().stream()
+                    .filter(s -> s.getSlug().equals(entry.getKey()))
+                    .findFirst();
+            if (storyOpt.isEmpty()) {
+                continue; // demo story not present (custom deployment) — nothing to backfill
+            }
+            Story story = storyOpt.get();
+            if (!story.getGenres().isEmpty()) {
+                continue; // already assigned — don't clobber admin edits
+            }
+
+            Set<Genre> genres = new LinkedHashSet<>();
+            for (String genreSlug : entry.getValue()) {
+                genreRepository.findAll().stream()
+                        .filter(g -> g.getSlug().equals(genreSlug))
+                        .findFirst()
+                        .ifPresent(genres::add);
+            }
+            story.setGenres(genres);
+            storyRepository.save(story);
+        }
     }
 
     private static List<SeedStory> catalogue() {
