@@ -3,11 +3,12 @@ import api from './api';
 // All story/chapter API calls are centralized here (see AGENTS.md convention).
 // Backend envelope: { code, result, message } — callers receive `result`.
 
-export async function getStories({ keyword = '', status = '', sort = 'latest', page = 0, size = 12 } = {}) {
+export async function getStories({ keyword = '', status = '', genre = '', sort = 'latest', page = 0, size = 12 } = {}) {
   const res = await api.get('/stories', {
     params: {
       keyword: keyword || undefined,
       status: status || undefined,
+      genre: genre || undefined,
       sort,
       page,
       size,
