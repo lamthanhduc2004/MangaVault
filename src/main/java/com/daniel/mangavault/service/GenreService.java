@@ -8,6 +8,7 @@ import com.daniel.mangavault.exception.ErrorCode;
 import com.daniel.mangavault.repository.GenreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -34,6 +35,7 @@ public class GenreService {
         Genre genre = genreRepository.save(Genre.builder()
                 .name(request.getName().trim())
                 .slug(request.getSlug().trim())
+                .description(normalizeDescription(request.getDescription()))
                 .build());
 
         return mapToResponse(genre);
@@ -53,6 +55,7 @@ public class GenreService {
 
         genre.setName(request.getName().trim());
         genre.setSlug(request.getSlug().trim());
+        genre.setDescription(normalizeDescription(request.getDescription()));
 
         return mapToResponse(genreRepository.save(genre));
     }
@@ -73,6 +76,11 @@ public class GenreService {
                 .id(genre.getId())
                 .name(genre.getName())
                 .slug(genre.getSlug())
+                .description(genre.getDescription())
                 .build();
+    }
+
+    private static String normalizeDescription(String description) {
+        return StringUtils.hasText(description) ? description.trim() : null;
     }
 }

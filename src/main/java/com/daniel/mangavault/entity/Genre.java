@@ -39,6 +39,9 @@ public class Genre {
     @Column(nullable = false, unique = true)
     private String slug;
 
+    @Column(length = 500)
+    private String description;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

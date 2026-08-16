@@ -14,6 +14,7 @@ export default function AdminStoryListPage() {
   const load = useCallback(async () => {
     try {
       setData(await getAdminStories({ keyword, page, size: 10 }));
+      setError(null);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
@@ -25,9 +26,10 @@ export default function AdminStoryListPage() {
 
   const handleDelete = async (story) => {
     if (!window.confirm(`Xóa truyện "${story.title}" và toàn bộ chương của nó?`)) return;
+    setError(null);
     try {
       await deleteStory(story.id);
-      load();
+      await load();
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }

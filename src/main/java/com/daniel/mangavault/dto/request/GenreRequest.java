@@ -15,4 +15,7 @@ public class GenreRequest {
     @NotBlank(message = "slug must not be blank")
     @Size(max = 100, message = "slug must not exceed 100 characters")
     private String slug;
+
+    @Size(max = 500, message = "description must not exceed 500 characters")
+    private String description;
 }

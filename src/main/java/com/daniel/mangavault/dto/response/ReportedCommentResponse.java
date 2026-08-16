@@ -16,5 +16,6 @@ public class ReportedCommentResponse {
     private String authorId;
     private String authorUsername;
     private int reportCount;
+    private boolean hidden;
     private LocalDateTime createdAt;
 }

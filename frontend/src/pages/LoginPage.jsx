@@ -32,7 +32,7 @@ export default function LoginPage() {
       {error && <p className="error">Lỗi: {error}</p>}
       <form onSubmit={handleSubmit} className="form">
         <label>
-          Tên đăng nhập
+          Tên đăng nhập hoặc email
           <input value={form.username} onChange={set('username')} autoComplete="username" />
         </label>
         <label>

@@ -18,6 +18,7 @@ import com.daniel.mangavault.repository.GenreRepository;
 import com.daniel.mangavault.repository.RatingRepository;
 import com.daniel.mangavault.repository.ReadingProgressRepository;
 import com.daniel.mangavault.repository.StoryRepository;
+import com.daniel.mangavault.repository.StoryRelationCleanupRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +36,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class StoryService {
     private final StoryRepository storyRepository;
+    private final StoryRelationCleanupRepository storyRelationCleanupRepository;
     private final ChapterRepository chapterRepository;
     private final FollowRepository followRepository;
     private final ReadingProgressRepository readingProgressRepository;
@@ -173,6 +175,10 @@ public class StoryService {
         readingProgressRepository.deleteByStoryId(id);
         followRepository.deleteByStoryId(id);
         chapterRepository.deleteByStoryId(id);
+        // The many-to-many join table also owns a foreign key to stories. Delete
+        // it explicitly so old MySQL schemas and lazy collection state cannot
+        // leave a row that blocks the final story delete.
+        storyRelationCleanupRepository.deleteGenreLinks(id);
         storyRepository.deleteById(id);
     }
 

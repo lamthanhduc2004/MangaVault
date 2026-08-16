@@ -2,6 +2,7 @@ package com.daniel.mangavault.repository;
 
 import com.daniel.mangavault.entity.Chapter;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -54,5 +55,7 @@ public interface ChapterRepository extends JpaRepository<Chapter, String> {
 
     long countByStoryId(String storyId);
 
-    void deleteByStoryId(String storyId);
+    @Modifying
+    @Query("delete from Chapter c where c.story.id = :storyId")
+    void deleteByStoryId(@Param("storyId") String storyId);
 }

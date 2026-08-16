@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,7 +27,9 @@ public interface ReadingProgressRepository extends JpaRepository<ReadingProgress
 
     void deleteByUserIdAndStoryId(String userId, String storyId);
 
-    void deleteByStoryId(String storyId);
+    @Modifying
+    @Query("delete from ReadingProgress p where p.story.id = :storyId")
+    void deleteByStoryId(@Param("storyId") String storyId);
 
     void deleteByChapterId(String chapterId);
 }

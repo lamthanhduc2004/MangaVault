@@ -26,7 +26,8 @@ public interface StoryRepository extends JpaRepository<Story, String> {
             select distinct s from Story s left join s.genres g
             where s.visibility = com.daniel.mangavault.enums.Visibility.PUBLIC
               and (:keyword = '' or lower(s.title) like lower(concat('%', :keyword, '%'))
-                                 or lower(s.author) like lower(concat('%', :keyword, '%')))
+                                 or lower(s.author) like lower(concat('%', :keyword, '%'))
+                                 or lower(g.name) like lower(concat('%', :keyword, '%')))
               and (:status is null or s.status = :status)
               and (:genreSlug is null or g.slug = :genreSlug)
             """,
@@ -34,7 +35,8 @@ public interface StoryRepository extends JpaRepository<Story, String> {
             select count(distinct s) from Story s left join s.genres g
             where s.visibility = com.daniel.mangavault.enums.Visibility.PUBLIC
               and (:keyword = '' or lower(s.title) like lower(concat('%', :keyword, '%'))
-                                 or lower(s.author) like lower(concat('%', :keyword, '%')))
+                                 or lower(s.author) like lower(concat('%', :keyword, '%'))
+                                 or lower(g.name) like lower(concat('%', :keyword, '%')))
               and (:status is null or s.status = :status)
               and (:genreSlug is null or g.slug = :genreSlug)
             """)
@@ -47,7 +49,8 @@ public interface StoryRepository extends JpaRepository<Story, String> {
     @Query(value = """
             select distinct s from Story s left join s.genres g
             where (:keyword = '' or lower(s.title) like lower(concat('%', :keyword, '%'))
-                                 or lower(s.author) like lower(concat('%', :keyword, '%')))
+                                 or lower(s.author) like lower(concat('%', :keyword, '%'))
+                                 or lower(g.name) like lower(concat('%', :keyword, '%')))
               and (:status is null or s.status = :status)
               and (:visibility is null or s.visibility = :visibility)
               and (:genreSlug is null or g.slug = :genreSlug)
@@ -55,7 +58,8 @@ public interface StoryRepository extends JpaRepository<Story, String> {
             countQuery = """
             select count(distinct s) from Story s left join s.genres g
             where (:keyword = '' or lower(s.title) like lower(concat('%', :keyword, '%'))
-                                 or lower(s.author) like lower(concat('%', :keyword, '%')))
+                                 or lower(s.author) like lower(concat('%', :keyword, '%'))
+                                 or lower(g.name) like lower(concat('%', :keyword, '%')))
               and (:status is null or s.status = :status)
               and (:visibility is null or s.visibility = :visibility)
               and (:genreSlug is null or g.slug = :genreSlug)
