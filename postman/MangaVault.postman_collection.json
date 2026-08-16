@@ -359,7 +359,7 @@
               "request": {
                 "method": "POST",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tiên hiệp\",\n  \"slug\": \"tien-hiep\"\n}" },
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tiên hiệp\",\n  \"slug\": \"tien-hiep\",\n  \"description\": \"Truyện tu luyện và khám phá thế giới tiên hiệp\"\n}" },
                 "url": "{{baseUrl}}/admin/genres"
               }
             },
@@ -368,7 +368,7 @@
               "request": {
                 "method": "PUT",
                 "header": [{ "key": "Content-Type", "value": "application/json" }],
-                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tiên hiệp\",\n  \"slug\": \"tien-hiep\"\n}" },
+                "body": { "mode": "raw", "raw": "{\n  \"name\": \"Tiên hiệp\",\n  \"slug\": \"tien-hiep\",\n  \"description\": \"Truyện tu luyện và khám phá thế giới tiên hiệp\"\n}" },
                 "url": "{{baseUrl}}/admin/genres/{{genreId}}"
               }
             },
@@ -412,12 +412,25 @@
           "name": "Moderation & Stats",
           "item": [
             {
+              "name": "Search all comments",
+              "request": { "method": "GET", "url": "{{baseUrl}}/admin/comments?keyword=&reportedOnly=false&page=0&size=10" }
+            },
+            {
               "name": "List reported comments",
               "request": { "method": "GET", "url": "{{baseUrl}}/admin/comments/reported?page=0&size=10" }
             },
             {
               "name": "Dismiss reports",
               "request": { "method": "POST", "url": "{{baseUrl}}/admin/comments/{{commentId}}/dismiss-reports" }
+            },
+            {
+              "name": "Hide comment",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"hidden\": true\n}" },
+                "url": "{{baseUrl}}/admin/comments/{{commentId}}/visibility"
+              }
             },
             {
               "name": "Delete comment",

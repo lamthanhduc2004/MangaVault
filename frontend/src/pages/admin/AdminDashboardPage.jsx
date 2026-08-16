@@ -32,7 +32,7 @@ export default function AdminDashboardPage() {
         <Link to="/admin" className="btn-small">Quản trị truyện</Link>
         <Link to="/admin/genres" className="btn-small">Thể loại</Link>
         <Link to="/admin/users" className="btn-small">Người dùng</Link>
-        <Link to="/admin/comments/reported" className="btn-small">Bình luận bị báo cáo</Link>
+        <Link to="/admin/comments/reported" className="btn-small">Quản trị bình luận</Link>
       </nav>
 
       {error && <p className="error">Lỗi: {error}</p>}

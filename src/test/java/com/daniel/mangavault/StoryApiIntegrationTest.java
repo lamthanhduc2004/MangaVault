@@ -1,11 +1,18 @@
 package com.daniel.mangavault;
 
 import com.daniel.mangavault.entity.Chapter;
+import com.daniel.mangavault.entity.Comment;
+import com.daniel.mangavault.entity.Genre;
 import com.daniel.mangavault.entity.Story;
+import com.daniel.mangavault.entity.User;
+import com.daniel.mangavault.enums.Role;
 import com.daniel.mangavault.enums.StoryStatus;
 import com.daniel.mangavault.enums.Visibility;
 import com.daniel.mangavault.repository.ChapterRepository;
+import com.daniel.mangavault.repository.CommentRepository;
+import com.daniel.mangavault.repository.GenreRepository;
 import com.daniel.mangavault.repository.StoryRepository;
+import com.daniel.mangavault.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,13 +20,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,20 +44,31 @@ class StoryApiIntegrationTest {
     @Autowired MockMvc mockMvc;
     @Autowired StoryRepository storyRepository;
     @Autowired ChapterRepository chapterRepository;
+    @Autowired CommentRepository commentRepository;
+    @Autowired GenreRepository genreRepository;
+    @Autowired UserRepository userRepository;
+    @Autowired PasswordEncoder passwordEncoder;
 
     private Story publicStory;
     private Story hiddenStory;
     private Chapter publishedChapter;
     private Chapter draftChapter;
+    private User reader;
 
     @BeforeEach
     void setUp() {
+        commentRepository.deleteAll();
         chapterRepository.deleteAll();
         storyRepository.deleteAll();
+        genreRepository.deleteAll();
+
+        Genre fantasy = genreRepository.save(Genre.builder()
+                .name("Kỳ ảo").slug("ky-ao").description("Thế giới phép thuật").build());
 
         publicStory = storyRepository.save(Story.builder()
                 .title("Truyện công khai").slug("truyen-cong-khai").author("Tác giả A")
-                .status(StoryStatus.ONGOING).visibility(Visibility.PUBLIC).build());
+                .status(StoryStatus.ONGOING).visibility(Visibility.PUBLIC)
+                .genres(new LinkedHashSet<>(java.util.List.of(fantasy))).build());
 
         hiddenStory = storyRepository.save(Story.builder()
                 .title("Truyện riêng tư").slug("truyen-rieng-tu").author("Tác giả B")
@@ -58,6 +81,14 @@ class StoryApiIntegrationTest {
         draftChapter = chapterRepository.save(Chapter.builder()
                 .story(publicStory).chapterNumber(2).title("Chương nháp")
                 .content("Chưa công khai").published(false).build());
+
+        reader = userRepository.findByUsername("reader-fixture").orElseGet(() ->
+                userRepository.save(User.builder()
+                        .username("reader-fixture")
+                        .email("reader@example.com")
+                        .password(passwordEncoder.encode("secret123"))
+                        .role(Role.USER)
+                        .build()));
     }
 
     @Test
@@ -84,6 +115,45 @@ class StoryApiIntegrationTest {
         mockMvc.perform(get("/api/stories").param("keyword", "Tác giả A"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("Tìm kiếm khớp tên thể loại")
+    void searchMatchesGenreName() throws Exception {
+        mockMvc.perform(get("/api/stories").param("keyword", "Kỳ ảo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("Đăng nhập chấp nhận email thay cho username")
+    void loginAcceptsEmail() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"username":"reader@example.com","password":"secret123"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.username").value("reader-fixture"))
+                .andExpect(jsonPath("$.result.token").isNotEmpty());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("Admin ẩn bình luận thì API công khai không còn trả bình luận đó")
+    void hiddenCommentIsExcludedFromPublicDiscussion() throws Exception {
+        Comment comment = commentRepository.save(Comment.builder()
+                .story(publicStory).user(reader).content("Nội dung cần ẩn").build());
+
+        mockMvc.perform(patch("/api/admin/comments/" + comment.getId() + "/visibility")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hidden\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.hidden").value(true));
+
+        mockMvc.perform(get("/api/stories/" + publicStory.getId() + "/comments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalElements").value(0));
     }
 
     @Test

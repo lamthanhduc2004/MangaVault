@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /** Story comments (F14) and the moderation queue (F20). */
 @Service
@@ -44,7 +45,7 @@ public class CommentService {
         }
 
         Page<Comment> comments = commentRepository
-                .findByStoryIdOrderByCreatedAtDesc(storyId, PageRequest.of(page, size));
+                .findByStoryIdAndHiddenFalseOrderByCreatedAtDesc(storyId, PageRequest.of(page, size));
 
         final String viewerId = currentUserId;
         return PageResponse.from(comments, comment -> mapToResponse(comment, viewerId));
@@ -121,16 +122,22 @@ public class CommentService {
         Page<Comment> comments = commentRepository
                 .findByReportCountGreaterThanOrderByReportCountDesc(0, PageRequest.of(page, size));
 
-        return PageResponse.from(comments, comment -> ReportedCommentResponse.builder()
-                .id(comment.getId())
-                .content(comment.getContent())
-                .storyId(comment.getStory().getId())
-                .storyTitle(comment.getStory().getTitle())
-                .authorId(comment.getUser().getId())
-                .authorUsername(comment.getUser().getUsername())
-                .reportCount(comment.getReportCount())
-                .createdAt(comment.getCreatedAt())
-                .build());
+        return PageResponse.from(comments, this::mapToModerationResponse);
+    }
+
+    public PageResponse<ReportedCommentResponse> getCommentsForAdmin(
+            String keyword, boolean reportedOnly, Boolean hidden, int page, int size) {
+        String normalizedKeyword = StringUtils.hasText(keyword) ? keyword.trim() : "";
+        Page<Comment> comments = commentRepository.searchForAdmin(
+                normalizedKeyword, reportedOnly, hidden, PageRequest.of(page, size));
+        return PageResponse.from(comments, this::mapToModerationResponse);
+    }
+
+    public ReportedCommentResponse setHidden(String commentId, boolean hidden) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new AppException(ErrorCode.COMMENT_NOT_FOUND));
+        comment.setHidden(hidden);
+        return mapToModerationResponse(commentRepository.save(comment));
     }
 
     /** Clears the reports without deleting the comment — "this one is fine". */
@@ -159,6 +166,20 @@ public class CommentService {
                 .mine(viewerId != null && viewerId.equals(author.getId()))
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
+                .build();
+    }
+
+    private ReportedCommentResponse mapToModerationResponse(Comment comment) {
+        return ReportedCommentResponse.builder()
+                .id(comment.getId())
+                .content(comment.getContent())
+                .storyId(comment.getStory().getId())
+                .storyTitle(comment.getStory().getTitle())
+                .authorId(comment.getUser().getId())
+                .authorUsername(comment.getUser().getUsername())
+                .reportCount(comment.getReportCount())
+                .hidden(comment.isHidden())
+                .createdAt(comment.getCreatedAt())
                 .build();
     }
 }

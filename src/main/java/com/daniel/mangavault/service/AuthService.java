@@ -59,7 +59,8 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.getUsername())
+        String identifier = request.getUsername().trim();
+        User user = userRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase(identifier, identifier)
                 // Same error for unknown username and wrong password —
                 // do not reveal which one failed.
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));

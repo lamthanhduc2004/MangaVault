@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getStories } from '../services/storyService';
+import { getGenres } from '../services/genreService';
 import StoryCard from '../components/StoryCard';
+import SearchBar from '../components/SearchBar';
+import GenreChips from '../components/GenreChips';
 
 const SECTIONS = [
   { key: 'updated', title: 'Truyện mới cập nhật', sort: 'updated' },
@@ -10,7 +13,9 @@ const SECTIONS = [
 ];
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [sections, setSections] = useState(null);
+  const [genres, setGenres] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -19,6 +24,7 @@ export default function HomePage() {
     Promise.all(SECTIONS.map((s) => getStories({ sort: s.sort, size: 8 })))
       .then((results) => setSections(results.map((r) => r.items)))
       .catch((err) => setError(err.response?.data?.message || err.message));
+    getGenres().then(setGenres).catch(() => setGenres([]));
   }, []);
 
   return (
@@ -26,6 +32,15 @@ export default function HomePage() {
       <section className="hero">
         <h1>📚 MangaVault</h1>
         <p className="muted">Đọc truyện chữ trực tuyến — cập nhật mỗi ngày.</p>
+        <div className="hero-search">
+          <SearchBar onSearch={(keyword) => navigate(`/stories?keyword=${encodeURIComponent(keyword)}`)} />
+        </div>
+        {genres.length > 0 && (
+          <div className="home-genres">
+            <span className="muted small">Khám phá theo thể loại</span>
+            <GenreChips genres={genres} />
+          </div>
+        )}
       </section>
 
       {error && <p className="error">Lỗi: {error}</p>}

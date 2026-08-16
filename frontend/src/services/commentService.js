@@ -31,6 +31,24 @@ export async function getReportedComments({ page = 0, size = 10 } = {}) {
   return res.data.result;
 }
 
+export async function getAdminComments({ keyword = '', reportedOnly = false, hidden = '', page = 0, size = 10 } = {}) {
+  const res = await api.get('/admin/comments', {
+    params: {
+      keyword: keyword || undefined,
+      reportedOnly,
+      hidden: hidden === '' ? undefined : hidden,
+      page,
+      size,
+    },
+  });
+  return res.data.result;
+}
+
+export async function setCommentHidden(id, hidden) {
+  const res = await api.patch(`/admin/comments/${id}/visibility`, { hidden });
+  return res.data.result;
+}
+
 export async function dismissReports(id) {
   const res = await api.post(`/admin/comments/${id}/dismiss-reports`);
   return res.data;

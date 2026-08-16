@@ -58,6 +58,7 @@ public class Story {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(length = 500)
     private String coverUrl;
 
     @Enumerated(EnumType.STRING)

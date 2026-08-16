@@ -24,8 +24,10 @@ public class StoryUpdateRequest {
     @Size(max = 255, message = "author must not exceed 255 characters")
     private String author;
 
+    @Size(max = 10000, message = "description must not exceed 10000 characters")
     private String description;
 
+    @Size(max = 500, message = "coverUrl must not exceed 500 characters")
     private String coverUrl;
 
     @NotNull(message = "status is required")

@@ -2,6 +2,7 @@ package com.daniel.mangavault.repository;
 
 import com.daniel.mangavault.entity.Rating;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,5 +16,7 @@ public interface RatingRepository extends JpaRepository<Rating, String> {
     @Query("select coalesce(avg(r.score), 0), count(r) from Rating r where r.story.id = :storyId")
     Object[] aggregateByStoryId(@Param("storyId") String storyId);
 
-    void deleteByStoryId(String storyId);
+    @Modifying
+    @Query("delete from Rating r where r.story.id = :storyId")
+    void deleteByStoryId(@Param("storyId") String storyId);
 }

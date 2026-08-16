@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function SearchBar({ initial = '', onSearch }) {
+export default function SearchBar({ initial = '', onSearch, placeholder = 'Tìm theo tên, tác giả, thể loại...' }) {
   const [value, setValue] = useState(initial);
   return (
     <form
@@ -9,7 +9,7 @@ export default function SearchBar({ initial = '', onSearch }) {
     >
       <input
         type="text"
-        placeholder="Tìm theo tên truyện..."
+        placeholder={placeholder}
         value={value}
         onChange={(e) => setValue(e.target.value)}
       />

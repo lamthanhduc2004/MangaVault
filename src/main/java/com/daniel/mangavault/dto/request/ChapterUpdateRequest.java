@@ -19,5 +19,6 @@ public class ChapterUpdateRequest {
     private String title;
 
     @NotBlank(message = "content must not be blank")
+    @Size(max = 1000000, message = "content must not exceed 1000000 characters")
     private String content;
 }

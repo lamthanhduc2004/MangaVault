@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getGenres, createGenre, updateGenre, deleteGenre } from '../../services/genreService';
 
-const EMPTY = { name: '', slug: '' };
+const EMPTY = { name: '', slug: '', description: '' };
 
 /** Rough slug helper for Vietnamese input — the admin can still edit it by hand. */
 const slugify = (value) =>
@@ -78,6 +78,7 @@ export default function AdminGenreListPage() {
           <tr>
             <th>Tên thể loại</th>
             <th>Slug</th>
+            <th>Mô tả</th>
             <th></th>
           </tr>
         </thead>
@@ -86,10 +87,18 @@ export default function AdminGenreListPage() {
             <tr key={genre.id}>
               <td>{genre.name}</td>
               <td className="muted">{genre.slug}</td>
+              <td className="muted">{genre.description || '—'}</td>
               <td className="table-actions">
                 <button
                   className="btn-small"
-                  onClick={() => { setEditingId(genre.id); setForm({ name: genre.name, slug: genre.slug }); }}
+                  onClick={() => {
+                    setEditingId(genre.id);
+                    setForm({
+                      name: genre.name,
+                      slug: genre.slug,
+                      description: genre.description || '',
+                    });
+                  }}
                 >
                   Sửa
                 </button>
@@ -114,11 +123,22 @@ export default function AdminGenreListPage() {
                 const name = e.target.value;
                 // Auto-fill the slug only while creating, never overwrite a manual edit.
                 setForm((f) => ({
+                  ...f,
                   name,
                   slug: !editingId && (f.slug === '' || f.slug === slugify(f.name)) ? slugify(name) : f.slug,
                 }));
               }}
               placeholder="Tiên hiệp"
+            />
+          </label>
+          <label>
+            Mô tả
+            <textarea
+              rows={3}
+              value={form.description}
+              maxLength={500}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder="Mô tả ngắn về thể loại"
             />
           </label>
           <label>

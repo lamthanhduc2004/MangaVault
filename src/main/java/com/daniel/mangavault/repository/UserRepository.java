@@ -14,6 +14,9 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByUsername(String username);
 
+    /** Login accepts either account name or email, case-insensitively. */
+    Optional<User> findByUsernameIgnoreCaseOrEmailIgnoreCase(String username, String email);
+
     /** Admin console search across username, email and display name. */
     @Query("""
             select u from User u

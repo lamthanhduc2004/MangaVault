@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -23,7 +24,9 @@ public interface FollowRepository extends JpaRepository<Follow, String> {
 
     long countByStoryId(String storyId);
 
-    void deleteByStoryId(String storyId);
+    @Modifying
+    @Query("delete from Follow f where f.story.id = :storyId")
+    void deleteByStoryId(@Param("storyId") String storyId);
 
     /** Most-followed stories for the admin dashboard, resolved in one grouped query. */
     @Query("select f.story.id from Follow f group by f.story.id order by count(f) desc")

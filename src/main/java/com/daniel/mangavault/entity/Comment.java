@@ -53,6 +53,11 @@ public class Comment {
     @Column(name = "report_count", columnDefinition = "INT NOT NULL DEFAULT 0")
     private int reportCount = 0;
 
+    /** Soft moderation keeps an audit trail and allows an admin to restore content. */
+    @Builder.Default
+    @Column(columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE")
+    private boolean hidden = false;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

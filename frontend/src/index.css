@@ -204,6 +204,10 @@ body.dark .badge-hiatus { background: #453310; color: #fcd34d; }
 
 .hero { text-align: center; padding: 1.5rem 0 2rem; }
 .hero h1 { font-size: 2rem; margin-bottom: 0.4rem; }
+.hero-search { display: flex; justify-content: center; margin: 1.25rem auto 0; }
+.hero-search .search-bar input { min-width: min(420px, 65vw); }
+.home-genres { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; margin-top: 1rem; }
+.home-genres .genre-chips { justify-content: center; }
 .section-header {
   display: flex; justify-content: space-between; align-items: baseline;
   margin-bottom: 1rem;

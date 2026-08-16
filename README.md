@@ -46,7 +46,7 @@ Response dùng chung envelope `ApiResponse<T>` `{ code, result, message }` — `
 # Công khai
 GET    /api/health
 GET    /api/stories?keyword=&status=&genre=&sort=&page=&size=
-                                              danh sách (keyword khớp tên hoặc tác giả; sort: latest|updated|views|rating|title)
+                                              danh sách (keyword khớp tên, tác giả hoặc thể loại; sort: latest|updated|views|rating|title)
 GET    /api/stories/{id}                      chi tiết truyện (chỉ truyện PUBLIC)
 GET    /api/stories/{id}/chapters             mục lục chương đã công khai
 GET    /api/chapters/{id}                     nội dung chương + prev/next id (tăng lượt xem)
@@ -54,7 +54,7 @@ GET    /api/genres                            danh sách thể loại
 GET    /api/stories/{id}/comments             bình luận của truyện
 GET    /api/stories/{id}/rating               điểm đánh giá trung bình
 POST   /api/auth/register                     đăng ký (luôn tạo role USER)
-POST   /api/auth/login                        đăng nhập, trả JWT
+POST   /api/auth/login                        đăng nhập bằng username/email, trả JWT
 
 # Cần đăng nhập
 GET    /api/me · PUT /api/me · PUT /api/me/password
@@ -71,6 +71,8 @@ POST/PUT/PATCH/DELETE /api/admin/stories/{id}/chapters, /api/admin/chapters/{id}
                                               CRUD chương + PATCH .../publish (ẩn/hiện)
 GET/POST/PUT/DELETE /api/admin/genres[/{id}]   CRUD thể loại
 GET    /api/admin/users · PATCH .../status · PATCH .../role
+GET    /api/admin/comments                    tìm/lọc toàn bộ bình luận
+PATCH  /api/admin/comments/{id}/visibility    ẩn/khôi phục bình luận
 GET    /api/admin/comments/reported · DELETE /api/admin/comments/{id}
 GET    /api/admin/stats                       thống kê hệ thống
 ```
